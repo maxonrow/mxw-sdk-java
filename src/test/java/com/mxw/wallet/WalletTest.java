@@ -40,7 +40,10 @@ public class WalletTest {
     public void testWalletFromMnemonic() {
         String mnemonic = TestConfig.MNEMONIC;
         String privateKey = TestConfig.PRIVATE_KEY_STRING;
+
         Wallet wallet =  Wallet.fromMnemonic(mnemonic, Optional.empty());
+        System.out.println(wallet.getPrivateKey());
+        System.out.println(wallet.getAddress());
         Assert.assertEquals(privateKey, wallet.getPrivateKey());
     }
 

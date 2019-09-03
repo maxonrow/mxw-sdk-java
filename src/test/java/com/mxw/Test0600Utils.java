@@ -63,7 +63,7 @@ public class Test0600Utils {
         assert(address != null);
     }
 
-    @Ignore
+
     @Test
     public void verifyBalance() {
 

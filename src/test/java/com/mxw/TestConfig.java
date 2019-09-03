@@ -4,7 +4,7 @@ public class TestConfig {
 
     // http service
     public static final String HTTP_SERVICE_URL = "https://alloys-rpc.maxonrow.com";
-    public static final String HTTP_SERVICE_NETWORK = "testnet";
+    public static final String HTTP_SERVICE_NETWORK = "alloys";
     public static final String HTTP_TEST_DECODE_HASH = "0xd00d14dd65c0ef47d65e2bdb0b8ef6b9f62689c20198d6b416e054e42339c9c5";
 
     // crypto
@@ -12,9 +12,9 @@ public class TestConfig {
     public static final String JSON_WALLET_ADDRESS = "mxw1wadakr69pe3duh5kpy3afgp6juj0vx9wt24vy2";
     public static final String ENCRYPT_PASSWORD = "strong password";
 
-    public static final String MNEMONIC = "zero what glove tone wise throw settle west iron jump exhaust clay";
-    public static final String PRIVATE_KEY_STRING = "0x11791686731e77f07758b86139837b42401be93ac6638ade5fc266403351652e";
-    public static final String PRIVATE_KEY_ADDRESS = "mxw1edl2ef5c45acvn7062lgz53szyspqx7psxrm4w";
+    public static final String MNEMONIC = "surprise edit rescue recall replace share genre royal choose rigid garage same";
+    public static final String PRIVATE_KEY_STRING = "0x62c428766c0b94d7571116cfbcab89b621f93e8e82e579e505b455087dcc147c";
+    public static final String PRIVATE_KEY_ADDRESS = "mxw13g0pzwfs8lz34ccyya73favc6vqkgqfu0l9ymf";
 
     // JsonRpcProvider
     public static final String INVALID_ADDRESS = "mxw1mklypleqjhemrlt6z625rzqa0jl6namdmmqnx4111";

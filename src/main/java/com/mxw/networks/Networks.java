@@ -7,7 +7,7 @@ public enum Networks {
 
     HOMESTEAD("mxw", "mxw"),
     MAINNET("mxw", "mxw"),
-    TESTNET("testnet", "testnet"),
+    ALLOYS("alloys", "alloys"),
     UNSPECIFED("0", "unspecified");
 
     private Network network;
@@ -24,7 +24,7 @@ public enum Networks {
         String chainId = this.network.getChainId();
         if(chainId.equalsIgnoreCase("mxw"))
             return mxwDefaultProvider("mxw");
-        else if (chainId.equalsIgnoreCase("testnet"))
+        else if (chainId.equalsIgnoreCase("alloys"))
             return etcDefaultProvider("https://alloys.maxonrow.com", chainId);
 
         return null;

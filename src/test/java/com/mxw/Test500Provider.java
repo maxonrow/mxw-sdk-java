@@ -38,8 +38,8 @@ public class Test500Provider {
     @Test
     public void testInstantiateNetwork() {
 
-        Network testnet = Networks.TESTNET.getNetwork();
-        Assert.assertEquals(testnet.getChainId(),"testnet");
+        Network testnet = Networks.ALLOYS.getNetwork();
+        Assert.assertEquals(testnet.getChainId(),"alloys");
 
         Network mainnet = Networks.MAINNET.getNetwork();
         Assert.assertEquals(mainnet.getChainId(),"mxw");
