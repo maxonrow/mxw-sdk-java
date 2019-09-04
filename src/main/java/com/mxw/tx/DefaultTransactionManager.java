@@ -39,12 +39,17 @@ public class DefaultTransactionManager extends TransactionManager {
     @Override
     public TransactionResponse sendTransaction(TransactionValueBuilder builder) {
         TransactionRequest request = this.createTransaction(builder);
-        String signedTransaction = this.sign(request);
-        return this.getProvider().sendTransaction(signedTransaction, false);
+        this.sign(request);
+        return this.sendTransaction(request);
     }
 
     @Override
-    public String sign(TransactionRequest request) {
+    public TransactionResponse sendTransaction(TransactionRequest request) {
+        return this.getProvider().sendTransaction(serialize(request), false);
+    }
+
+    @Override
+    public TransactionRequest sign(TransactionRequest request) {
         if(request.getNonce() == null){
             request.setNonce(this.getProvider().getTransactionCount(this.getFromAddress(), BlockTagName.PENDING));
         }
@@ -64,40 +69,64 @@ public class DefaultTransactionManager extends TransactionManager {
         }
         request.setSequence(request.getNonce());
 
-        TransactionPayload transactionPayload = new TransactionPayload(request.getAccountNumber(),
-                request.getChainId(), request.getValue().getFee(), request.getValue().getMemo(), request.getValue().getMsg(), request.getNonce());
+        TransactionPayload transactionPayload = createPayload(request);
 
         try {
             String payload = this.objectMapper.writeValueAsString(transactionPayload);
             byte[] hash = payload.getBytes(StandardCharsets.UTF_8);
             Sign.SignatureData signature = Sign.signMessage(hash, this.signingKey.getKeyPair(), true);
-            return serialize(request, signature, this.signingKey.getCompressedPublicKey());
+            addSignature(request, signature, this.signingKey.getCompressedPublicKey());
+            return request;
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("unable to serialize transaction");
         }
     }
 
-    protected  String serialize(TransactionRequest unsignedTransaction, Sign.SignatureData signature, String publicKey) {
-        if(signature==null){
+    @Override
+    public String signAndSerialize(TransactionRequest request) {
+        return serialize((sign(request)));
+    }
+
+    public void addSignature(TransactionRequest request, Sign.SignatureData signature, String publicKey) {
+        if(request.getValue()==null) {
+            throw new IllegalArgumentException("Invalid unsigned transaction");
+        }
+
+        if(request.getValue().getSignatures()==null) {
+            request.getValue().setSignatures(new ArrayList<>());
+        }
+
+
+        String encodedPubKey = Base64s.encode(Numeric.hexStringToByteArray(publicKey));
+
+        for (Signature sign : request.getValue().getSignatures()) {
+            if(sign.getPublicKey().getValue().equalsIgnoreCase(encodedPubKey)){
+                return;
+            }
+        }
+
+        // if public key not appear in signatures, add in
+        PublicKey pubKey = new PublicKey("tendermint/PubKeySecp256k1", encodedPubKey);
+        request.getValue().getSignatures().add(new Signature(pubKey, Base64s.encode(Sign.joinSignature(signature))));
+
+    }
+
+    protected  String serialize(TransactionRequest request) {
+
+        if(request.getValue()==null) {
+            throw new IllegalArgumentException("Invalid transaction");
+        }
+
+        if(request.getValue().getSignatures()==null || request.getValue().getSignatures().size() == 0){
             try {
-                return Base64s.encode(this.objectMapper.writeValueAsString(unsignedTransaction).getBytes(StandardCharsets.UTF_8));
+                return Base64s.encode(this.objectMapper.writeValueAsString(request).getBytes(StandardCharsets.UTF_8));
             } catch (JsonProcessingException e) {
                 throw new IllegalArgumentException("unable to encode Base64 transaction");
             }
         }
 
-        if(unsignedTransaction.getValue()==null) {
-            throw new IllegalArgumentException("Invalid unsigned transaction");
-        }
-
-        if(unsignedTransaction.getValue().getSignatures()==null) {
-            unsignedTransaction.getValue().setSignatures(new ArrayList<>());
-        }
-        PublicKey pubKey = new PublicKey("tendermint/PubKeySecp256k1", Base64s.encode(Numeric.hexStringToByteArray(publicKey)));
-        unsignedTransaction.getValue().getSignatures().add(new Signature(pubKey, Base64s.encode(Sign.joinSignature(signature))));
-
         try {
-            String json = objectMapper.writeValueAsString(unsignedTransaction);
+            String json = objectMapper.writeValueAsString(request);
             String encoded = Base64s.encode(json.getBytes(StandardCharsets.UTF_8));
             if(logger.isDebugEnabled()){
                 logger.debug("serialize transaction - " + json);
@@ -107,5 +136,10 @@ public class DefaultTransactionManager extends TransactionManager {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("unable to encode base64 tranasaction");
         }
+    }
+
+    private TransactionPayload createPayload(TransactionRequest request) {
+        return  new TransactionPayload(request.getAccountNumber(),
+                request.getChainId(), request.getValue().getFee(), request.getValue().getMemo(), request.getValue().getMsg(), request.getNonce());
     }
 }

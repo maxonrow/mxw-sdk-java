@@ -122,7 +122,7 @@ public class Wallet implements Signer {
 
     @Override
     public String sign(TransactionRequest request) {
-        return this.transactionManager.sign(request);
+        return this.transactionManager.signAndSerialize(request);
     }
 
     @Override

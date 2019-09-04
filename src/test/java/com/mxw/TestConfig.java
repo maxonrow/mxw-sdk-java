@@ -19,8 +19,10 @@ public class TestConfig {
     // JsonRpcProvider
     public static final String INVALID_ADDRESS = "mxw1mklypleqjhemrlt6z625rzqa0jl6namdmmqnx4111";
     public static final String VALID_ADDRESS_BUT_NULL = "mxw1005k2n2m2su8np5ujgpd748v5vf3yadhk2j6xl";
+
     // wallet
     public static final String TO_ADDRESS_MNEMONIC = "time bag tenant dish cube try engine volcano session album fame cool";
     public static final String TO_ADDRESS ="mxw1awqypf50w23rkqqpdn67fv6hfvtd87vwdxnqk7";
+    public static final String TO_ADDRESS_PRIVATE_KEY = "0x670eb26864a71e6f69cc5877a4be4310c3a1d3279f50040c129110dc93b1f86f";
 
 }
