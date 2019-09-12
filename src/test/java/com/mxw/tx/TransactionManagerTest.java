@@ -1,11 +1,9 @@
 package com.mxw.tx;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mxw.TestConfig;
 import com.mxw.crypto.SigningKey;
 import com.mxw.networks.Network;
-import com.mxw.protocol.ObjectMapperFactory;
 import com.mxw.protocol.http.HttpService;
 import com.mxw.protocol.request.TransactionRequest;
 import com.mxw.protocol.request.messages.builder.BankSendBuilder;
@@ -29,14 +27,14 @@ public class TransactionManagerTest {
         TransactionRequest request = transactionManager1.createTransaction(new BankSendBuilder(TestConfig.PRIVATE_KEY_ADDRESS, TestConfig.TO_ADDRESS, BigInteger.TEN, "1"));
         Assert.assertEquals(request.getValue().getSignatures().size(), 0);
         // sign first time
-        transactionManager1.sign(request);
+        transactionManager1.signRequest(request);
         Assert.assertEquals(request.getValue().getSignatures().size(), 1);
         // resign to check duplicate signatures
-        transactionManager1.sign(request);
+        transactionManager1.signRequest(request);
         // should remain one
         Assert.assertEquals(request.getValue().getSignatures().size(), 1);
         TransactionManager transactionManager2 = new DefaultTransactionManager(jsonRpcProvider, new SigningKey(TestConfig.TO_ADDRESS_PRIVATE_KEY));
-        transactionManager2.sign(request);
+        transactionManager2.signRequest(request);
         Assert.assertEquals(request.getValue().getSignatures().size(), 2);
     }
 

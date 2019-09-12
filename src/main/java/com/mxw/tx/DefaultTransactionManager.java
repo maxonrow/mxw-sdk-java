@@ -39,7 +39,7 @@ public class DefaultTransactionManager extends TransactionManager {
     @Override
     public TransactionResponse sendTransaction(TransactionValueBuilder builder) {
         TransactionRequest request = this.createTransaction(builder);
-        this.sign(request);
+        this.signRequest(request);
         return this.sendTransaction(request);
     }
 
@@ -49,7 +49,24 @@ public class DefaultTransactionManager extends TransactionManager {
     }
 
     @Override
-    public TransactionRequest sign(TransactionRequest request) {
+    public Signature sign(Object payload) {
+        String serialized = null;
+        try {
+            serialized = this.objectMapper.writeValueAsString(payload);
+            byte[] hash = serialized.getBytes(StandardCharsets.UTF_8);
+
+            Sign.SignatureData signature = Sign.signMessage(hash, signingKey.getKeyPair(), true);
+            String encodedPubKey = Base64s.encode(Numeric.hexStringToByteArray(signingKey.getCompressedPublicKey()));
+            PublicKey pubKey = new PublicKey("tendermint/PubKeySecp256k1", encodedPubKey);
+
+            return new Signature(pubKey, Base64s.encode(Sign.joinSignature(signature)));
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("unable to serialize transaction");
+        }
+    }
+
+    @Override
+    public TransactionRequest signRequest(TransactionRequest request) {
         if(request.getNonce() == null){
             request.setNonce(this.getProvider().getTransactionCount(this.getFromAddress(), BlockTagName.PENDING));
         }
@@ -71,6 +88,8 @@ public class DefaultTransactionManager extends TransactionManager {
 
         TransactionPayload transactionPayload = createPayload(request);
 
+        addSignature(request, this.sign(transactionPayload));
+        /*
         try {
             String payload = this.objectMapper.writeValueAsString(transactionPayload);
             byte[] hash = payload.getBytes(StandardCharsets.UTF_8);
@@ -80,14 +99,16 @@ public class DefaultTransactionManager extends TransactionManager {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("unable to serialize transaction");
         }
+         */
+        return request;
     }
 
     @Override
     public String signAndSerialize(TransactionRequest request) {
-        return serialize((sign(request)));
+        return serialize((signRequest(request)));
     }
 
-    public void addSignature(TransactionRequest request, Sign.SignatureData signature, String publicKey) {
+    private void addSignature(TransactionRequest request, Signature signature) {
         if(request.getValue()==null) {
             throw new IllegalArgumentException("Invalid unsigned transaction");
         }
@@ -97,7 +118,7 @@ public class DefaultTransactionManager extends TransactionManager {
         }
 
 
-        String encodedPubKey = Base64s.encode(Numeric.hexStringToByteArray(publicKey));
+        String encodedPubKey = Base64s.encode(Numeric.hexStringToByteArray(this.signingKey.getCompressedPublicKey()));
 
         for (Signature sign : request.getValue().getSignatures()) {
             if(sign.getPublicKey().getValue().equalsIgnoreCase(encodedPubKey)){
@@ -105,9 +126,7 @@ public class DefaultTransactionManager extends TransactionManager {
             }
         }
 
-        // if public key not appear in signatures, add in
-        PublicKey pubKey = new PublicKey("tendermint/PubKeySecp256k1", encodedPubKey);
-        request.getValue().getSignatures().add(new Signature(pubKey, Base64s.encode(Sign.joinSignature(signature))));
+        request.getValue().getSignatures().add(signature);
 
     }
 

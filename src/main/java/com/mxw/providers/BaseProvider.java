@@ -70,9 +70,9 @@ public abstract class BaseProvider extends AbstractProvider {
         switch (moduleName.toLowerCase()){
             case "bank/bank-send":
             case "kyc/kyc-whitelist":
-            case "kyc/kyc-revokeWhitelist":
-            case "nameservice/nameservice-setAliasStatus":
-            case "nameservice/nameservice-createAlias":
+            case "kyc/kyc-revokewhitelist":
+            case "nameservice/nameservice-setaliasstatus":
+            case "nameservice/nameservice-createalias":
                 request.setType("cosmos-sdk/StdTx");
                 break;
             default:

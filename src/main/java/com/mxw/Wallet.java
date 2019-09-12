@@ -130,6 +130,10 @@ public class Wallet implements Signer {
         return this.transactionManager.sendTransaction(builder);
     }
 
+    @Override
+    public TransactionResponse sendTransaction(TransactionRequest request) {
+        return this.transactionManager.sendTransaction(request);
+    }
 
     public BigInteger getTransactionCount(BlockTag blockTag) {
         verifyPrecondition(this.provider!=null, MISSING_PROVIDER);
@@ -211,5 +215,8 @@ public class Wallet implements Signer {
         return Keys.createEcKeyPair();
     }
 
+    public Signature getSignature(Object object) throws Exception{
+        return this.transactionManager.sign(object);
+    }
 }
 

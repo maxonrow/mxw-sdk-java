@@ -1,6 +1,7 @@
 package com.mxw.utils;
 
 
+import java.math.BigInteger;
 import java.util.Base64;
 
 public class Base64s {
@@ -30,4 +31,12 @@ public class Base64s {
         return b64String.matches("(?:[A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=)");
     }
 
+    public static String base16to64(String hex){
+
+        if(hex.startsWith("0x") || hex.startsWith("0X")){
+            hex = hex.substring(2);
+        }
+
+        return Base64.getEncoder().encodeToString(new BigInteger(hex, 16).toByteArray());
+    }
 }

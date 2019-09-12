@@ -138,10 +138,10 @@ public class HttpService extends BaseService {
         RequestBody requestBody = RequestBody.create(JSON_MEDIA_TYPE, request);
         Headers headers = buildHeaders();
 
-        okhttp3.Request httpRequest =
-                new okhttp3.Request.Builder().url(url).headers(headers).post(requestBody).build();
+        Request httpRequest =
+                new Request.Builder().url(url).headers(headers).post(requestBody).build();
 
-        okhttp3.Response response = httpClient.newCall(httpRequest).execute();
+        Response response = httpClient.newCall(httpRequest).execute();
         processHeaders(response.headers());
         ResponseBody responseBody = response.body();
         if (response.isSuccessful()) {

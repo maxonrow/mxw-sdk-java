@@ -143,4 +143,9 @@ public class Keys {
     public static String verifyMessage(byte[] message, Sign.SignatureData signature) throws SignatureException {
         return recoverAddress(Hash.sha256(message),signature);
     }
+
+    public static String getKeyAddressHex(String payload) throws Exception{
+        byte[] hash = payload.getBytes(StandardCharsets.UTF_8);
+        return Numeric.toHexString(Hash.sha256(hash));
+    }
 }

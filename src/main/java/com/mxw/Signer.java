@@ -23,4 +23,5 @@ public interface Signer {
 
     TransactionResponse sendTransaction(TransactionValueBuilder builder);
 
+    TransactionResponse sendTransaction(TransactionRequest request);
 }
