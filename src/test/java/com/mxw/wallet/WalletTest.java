@@ -3,13 +3,15 @@ package com.mxw.wallet;
 import com.mxw.TestConfig;
 import com.mxw.Wallet;
 import com.mxw.crypto.SecretStorageUtils;
+import com.mxw.crypto.SigningKey;
 import com.mxw.crypto.WalletFile;
 import com.mxw.exceptions.CipherException;
 import com.mxw.networks.Network;
 import com.mxw.protocol.http.HttpService;
+import com.mxw.protocol.response.TransactionResponse;
 import com.mxw.providers.JsonRpcProvider;
 import com.mxw.providers.Provider;
-import com.mxw.protocol.response.TransactionResponse;
+import com.mxw.tx.DefaultTransactionManager;
 import com.mxw.utils.Convert;
 import com.mxw.utils.Strings;
 import org.junit.Assert;
@@ -17,6 +19,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.Optional;
 
 public class WalletTest {
@@ -34,6 +39,22 @@ public class WalletTest {
         BigInteger amount = Convert.toCIN("1", Convert.Unit.MXW).toBigIntegerExact();
         TransactionResponse response = wallet.transfer(toAddress, amount, "this is a memo");
         Assert.assertFalse(Strings.isEmpty(response.getHash()));
+    }
+
+    @Ignore
+    @Test
+    public void testBulkTransfer() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
+        String privateKey = TestConfig.PRIVATE_KEY_STRING;
+
+        SigningKey signingKey = new SigningKey(privateKey);
+        Wallet wallet = new Wallet(signingKey, jsonRpcProvider, new DefaultTransactionManager(jsonRpcProvider, signingKey));
+        BigInteger amount = Convert.toCIN("1", Convert.Unit.MXW).toBigIntegerExact();
+        for(int i=0; i < 100; i++) {
+           Wallet w = Wallet.createNewWallet();
+           String address = w.getAddress();
+            TransactionResponse response = wallet.transfer(address, amount, "this is a memo for " + address);
+            Assert.assertFalse(Strings.isEmpty(response.getHash()));
+        }
     }
 
     @Test

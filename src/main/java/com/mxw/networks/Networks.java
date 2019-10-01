@@ -5,8 +5,8 @@ import com.mxw.providers.Provider;
 
 public enum Networks {
 
-    HOMESTEAD("mxw", "mxw"),
-    MAINNET("mxw", "mxw"),
+    HOMESTEAD("maxonrow", "maxonrow"),
+    MAINNET("maxonrow", "maxonrow"),
     ALLOYS("alloys", "alloys"),
     UNSPECIFED("0", "unspecified");
 
@@ -22,8 +22,8 @@ public enum Networks {
 
     public Provider getDefaultProvider() {
         String chainId = this.network.getChainId();
-        if(chainId.equalsIgnoreCase("mxw"))
-            return mxwDefaultProvider("mxw");
+        if(chainId.equalsIgnoreCase("maxonrow"))
+            return mxwDefaultProvider("maxonrow");
         else if (chainId.equalsIgnoreCase("alloys"))
             return etcDefaultProvider("https://alloys.maxonrow.com", chainId);
 

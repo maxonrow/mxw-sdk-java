@@ -16,6 +16,7 @@ import com.mxw.providers.JsonRpcProvider;
 import com.mxw.utils.Address;
 import com.mxw.utils.Base64s;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -58,6 +59,7 @@ public class Test0100Kyc {
     }
 
 
+    @Ignore
     @Test
     public void testKyc() throws Exception {
 

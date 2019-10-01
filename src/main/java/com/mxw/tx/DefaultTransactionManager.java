@@ -89,17 +89,7 @@ public class DefaultTransactionManager extends TransactionManager {
         TransactionPayload transactionPayload = createPayload(request);
 
         addSignature(request, this.sign(transactionPayload));
-        /*
-        try {
-            String payload = this.objectMapper.writeValueAsString(transactionPayload);
-            byte[] hash = payload.getBytes(StandardCharsets.UTF_8);
-            Sign.SignatureData signature = Sign.signMessage(hash, this.signingKey.getKeyPair(), true);
-            addSignature(request, signature, this.signingKey.getCompressedPublicKey());
-            return request;
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("unable to serialize transaction");
-        }
-         */
+
         return request;
     }
 

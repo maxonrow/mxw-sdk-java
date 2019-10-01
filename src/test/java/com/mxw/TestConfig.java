@@ -18,7 +18,7 @@ public class TestConfig {
 
     // JsonRpcProvider
     public static final String INVALID_ADDRESS = "mxw1mklypleqjhemrlt6z625rzqa0jl6namdmmqnx4111";
-    public static final String VALID_ADDRESS_BUT_NULL = "mxw1005k2n2m2su8np5ujgpd748v5vf3yadhk2j6xl";
+    public static final String VALID_ADDRESS_BUT_NULL = "mxw1vvtekcqjyd743zh3zu7d6zr7v4fng23vk2nqtx";
 
     // wallet
     public static final String TO_ADDRESS_MNEMONIC = "time bag tenant dish cube try engine volcano session album fame cool";

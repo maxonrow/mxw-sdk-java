@@ -42,10 +42,10 @@ public class Test500Provider {
         Assert.assertEquals(testnet.getChainId(),"alloys");
 
         Network mainnet = Networks.MAINNET.getNetwork();
-        Assert.assertEquals(mainnet.getChainId(),"mxw");
+        Assert.assertEquals(mainnet.getChainId(),"maxonrow");
 
         Network homestead = Networks.HOMESTEAD.getNetwork();
-        Assert.assertEquals(homestead.getChainId(), "mxw");
+        Assert.assertEquals(homestead.getChainId(), "maxonrow");
 
         Network n = Network.getNetwork("testnet");
         Assert.assertEquals(n.getChainId(),"testnet");

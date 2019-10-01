@@ -160,7 +160,10 @@ public class Wallet implements Signer {
 
     public Wallet connect(Provider provider) {
         this.provider = provider;
-        this.transactionManager.setProvider(this.provider);
+        if(this.transactionManager==null)
+            this.transactionManager = new DefaultTransactionManager(this.provider, this.signingKey);
+        else
+            this.transactionManager.setProvider(this.provider);
         return this;
     }
 
@@ -194,6 +197,10 @@ public class Wallet implements Signer {
     public static Wallet createNewWallet() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
         ECKeyPair keyPair = createRandomKeyPair();
         return new Wallet(keyPair.getPrivateKey());
+    }
+
+    public static Wallet fromMnemonic(String mnemonic) {
+        return fromMnemonic(mnemonic, Optional.empty());
     }
 
     public static Wallet fromMnemonic(String mnemonic, Optional<int[]> path) {
