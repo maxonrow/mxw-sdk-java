@@ -1,8 +1,11 @@
 package com.mxw.crypto;
 
+import com.mxw.Constants;
+import com.mxw.Wallet;
 import com.mxw.utils.Numeric;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
    TODO: add verify computeSharedSecret
@@ -23,7 +26,7 @@ public class SigningKey {
 
     private String mnemonic;
 
-    private String path;
+    private int[] path;
 
     private ECKeyPair keyPair;
 
@@ -106,11 +109,11 @@ public class SigningKey {
         this.mnemonic = mnemonic;
     }
 
-    public String getPath() {
+    public int[] getPath() {
         return path;
     }
 
-    public void setPath(String path) {
+    public void setPath(int[] path) {
         this.path = path;
     }
 
@@ -124,6 +127,22 @@ public class SigningKey {
 
     public ECDSASignature signDegest(byte[] digest) {
         return this.keyPair.sign(digest);
+    }
+
+    public static SigningKey fromMnemonic(String mnemonic) {
+        return fromMnemonic(mnemonic, Optional.empty());
+    }
+
+    public static SigningKey fromMnemonic(String mnemonic, Optional<int[]> path) {
+        if(!path.isPresent())
+            path = Optional.of(Constants.DefaultHDPath);
+        byte[] seed = MnemonicUtils.generateSeed(mnemonic, null);
+        Bip32ECKeyPair masterKeyPair = Bip32ECKeyPair.generateKeyPair(seed);
+        Bip32ECKeyPair bip44KeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, path.get());
+        SigningKey key = new SigningKey(bip44KeyPair);
+        key.setMnemonic(mnemonic);
+        key.setPath(path.get());
+        return key;
     }
 
     @Override

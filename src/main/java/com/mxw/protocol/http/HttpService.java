@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static okhttp3.ConnectionSpec.CLEARTEXT;
+import okhttp3.MediaType.Companion;
 
 
 /** HTTP implementation of our services API.
@@ -135,7 +136,7 @@ public class HttpService extends BaseService {
     @Override
     protected InputStream performIO(String request) throws IOException {
 
-        RequestBody requestBody = RequestBody.create(JSON_MEDIA_TYPE, request);
+        RequestBody requestBody =  RequestBody.create(request, JSON_MEDIA_TYPE);
         Headers headers = buildHeaders();
 
         Request httpRequest =

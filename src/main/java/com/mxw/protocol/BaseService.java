@@ -117,6 +117,7 @@ public abstract class BaseService implements Service {
         return response;
     }
 
+    @SuppressWarnings("unchecked")
     private void readResponse(Response response, Type responseType, JsonNode resultNode) throws IOException {
         JavaType returnJavaType = objectMapper.getTypeFactory().constructType(responseType);
         if(!hasInnerResponse(resultNode)) {

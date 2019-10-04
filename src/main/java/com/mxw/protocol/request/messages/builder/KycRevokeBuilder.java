@@ -30,6 +30,7 @@ public class KycRevokeBuilder implements TransactionValueBuilder {
 
         TransactionMessage message = new TransactionMessage<>();
         message.setType("kyc/revokeWhitelist");
+        //noinspection unchecked
         message.setValue(this.kycRevoke);
         value.getMsg().add(message);
 

@@ -45,6 +45,7 @@ public class TransactionMessageDeserializer extends StdDeserializer<TransactionM
                 valueParser.nextToken();
             }
             Object value = ctx.readValue(valueParser, getGenericClassByType(message.getType()));
+            //noinspection unchecked
             message.setValue(value);
         }
 

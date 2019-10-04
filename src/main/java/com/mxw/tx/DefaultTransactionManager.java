@@ -68,7 +68,7 @@ public class DefaultTransactionManager extends TransactionManager {
     @Override
     public TransactionRequest signRequest(TransactionRequest request) {
         if(request.getNonce() == null){
-            request.setNonce(this.getProvider().getTransactionCount(this.getFromAddress(), BlockTagName.PENDING));
+            request.setNonce(this.getNonce());
         }
 
         if(request.getAccountNumber() == null) {
@@ -145,6 +145,10 @@ public class DefaultTransactionManager extends TransactionManager {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("unable to encode base64 tranasaction");
         }
+    }
+
+    protected BigInteger getNonce() {
+        return this.getProvider().getTransactionCount(this.getFromAddress(), BlockTagName.PENDING);
     }
 
     private TransactionPayload createPayload(TransactionRequest request) {

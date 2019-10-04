@@ -90,25 +90,6 @@ public class Test0200Wallet {
         assert(wallet.getProvider() != null);
     }
 
-    /*
-    @Test
-    public void lookupAddress() throws Exception{
-
-        Wallet wallet = new Wallet(this.privateKey);
-        wallet = wallet.connect(jsonRpcProvider);
-
-        String lookupAddress = this.jsonRpcProvider.lookupAddress(wallet.getAddress());
-        System.out.println(lookupAddress);
-
-        //assert() != null);
-    }*/
-    @Ignore
-    @Test
-    public void transfer(){
-        TransactionResponse response = wallet.connect(jsonRpcProvider).transfer(toAddress, BigInteger.valueOf(1000000000000L), "testing");
-        System.out.println(response.getHash());
-        Assert.assertFalse(Strings.isEmpty(response.getHash()));
-    }
 
     @Test
     public void airDropTransferWithZeroFee(){
@@ -133,39 +114,6 @@ public class Test0200Wallet {
         assert(gas.compareTo(BigInteger.ZERO) == 0);
     }
 
-    @Ignore
-    @Test
-    public void transferButNotEnoughBalanceForFee(){
-
-        Wallet wallet = new Wallet(TestConfig.PRIVATE_KEY_STRING);
-
-        BigInteger amount = Convert.toCIN(new BigDecimal("10000000000000000000"), Convert.Unit.MXW).toBigIntegerExact();
-
-        TransactionRequest request = this.jsonRpcProvider.getTransactionRequest("bank","bank-send", new BankSendBuilder(wallet.getAddress(), toAddress, amount, "1"));
-        TransactionFee fee = this.jsonRpcProvider.getTransactionFee(null, null, request);
-        request.getValue().setFee(fee);
-
-        wallet.connect(jsonRpcProvider);
-
-        if(request.getNonce()==null) {
-            request.setNonce(jsonRpcProvider.getTransactionCount(wallet.getAddress()));
-        }
-
-        if(Strings.isEmpty(request.getChainId())){
-            request.setChainId(jsonRpcProvider.getNetwork().getChainId());
-        }
-
-            try{
-                String signedTransaction = wallet.sign(request);
-                TransactionResponse transactionResponse = jsonRpcProvider.sendTransaction(signedTransaction, false);
-
-            }catch (TransactionException ex) {
-                Assert.assertEquals(ex.getMessage(),"insufficient funds");
-                return;
-            }
-
-        Assert.fail("no exception");
-    }
 
     @Test
     public void getAccountNumber(){
@@ -232,38 +180,6 @@ public class Test0200Wallet {
         assert(signedTransaction != null);
     }
 
-    @Ignore
-    @Test
-    public void signTransaction() throws Exception{
-
-        Wallet wallet = new Wallet(privateKey);
-
-        String toAddress = this.jsonRpcProvider.resolveName(this.toAddress);
-
-        BigInteger amount = BigInteger.valueOf(1);
-
-        TransactionRequest request = this.jsonRpcProvider.getTransactionRequest("bank","bank-send", new BankSendBuilder(wallet.getAddress(), toAddress, amount, "1"));
-        TransactionFee fee = this.jsonRpcProvider.getTransactionFee(null, null, request);
-
-        request.getValue().setFee(fee);
-
-        wallet.connect(jsonRpcProvider);
-
-        if(request.getNonce()==null) {
-            request.setNonce(jsonRpcProvider.getTransactionCount(wallet.getAddress()));
-        }
-
-        if(Strings.isEmpty(request.getChainId())){
-            request.setChainId(jsonRpcProvider.getNetwork().getChainId());
-        }
-
-        String signedTransaction = wallet.sign(request);
-        TransactionResponse transactionResponse = jsonRpcProvider.sendTransaction(signedTransaction, false);
-
-        String hash = transactionResponse.getHash();
-        System.out.println(hash);
-        assert(hash != null);
-    }
 
     // signTransactionWtihAnonymousAttributes
     // cleanUpRpcListener

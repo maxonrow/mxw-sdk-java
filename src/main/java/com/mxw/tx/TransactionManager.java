@@ -65,11 +65,6 @@ public abstract class TransactionManager {
 
     public TransactionRequest createTransaction(TransactionValueBuilder builder) {
         TransactionRequest request = this.provider.getTransactionRequest(builder.getRoute(), builder.getTransactionType(), builder);
-
-        if (request.getNonce() == null) {
-            request.setNonce(provider.getTransactionCount(fromAddress));
-        }
-
         if (Strings.isEmpty(request.getChainId())) {
             request.setChainId(provider.getNetwork().getChainId());
         }

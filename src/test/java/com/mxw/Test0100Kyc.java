@@ -1,22 +1,24 @@
 package com.mxw;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mxw.crypto.Keys;
 import com.mxw.crypto.SecretStorage;
+import com.mxw.exceptions.TransactionException;
 import com.mxw.networks.Network;
 import com.mxw.protocol.ObjectMapperFactory;
 import com.mxw.protocol.http.HttpService;
-import com.mxw.protocol.response.PublicKey;
-import com.mxw.protocol.response.kyc.*;
 import com.mxw.protocol.request.TransactionRequest;
 import com.mxw.protocol.request.messages.builder.KycRevokeBuilder;
 import com.mxw.protocol.request.messages.builder.KycWhiteListBuilder;
+import com.mxw.protocol.response.PublicKey;
+import com.mxw.protocol.response.TransactionReceipt;
+import com.mxw.protocol.response.TransactionResponse;
+import com.mxw.protocol.response.kyc.*;
 import com.mxw.providers.JsonRpcProvider;
 import com.mxw.utils.Address;
 import com.mxw.utils.Base64s;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -58,8 +60,6 @@ public class Test0100Kyc {
         userWallet.connect(this.jsonRpcProvider);
     }
 
-
-    @Ignore
     @Test
     public void testKyc() throws Exception {
 
@@ -91,10 +91,13 @@ public class Test0100Kyc {
         request.setChainId(this.jsonRpcProvider.getNetwork().getChainId());
 
         this.middlewareWallet.sign(request);
-        this.middlewareWallet.sendTransaction(request);
+        TransactionResponse response = this.middlewareWallet.sendTransaction(request);
 
-        System.out.println("Wait for 1 minute ... ");
-        Thread.sleep(60000);
+        System.out.println("Wait for transaction confirm ... ");
+        Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), 10, 15000);
+        Assert.assertTrue(receipt.isPresent());
+
+        Assert.assertEquals(response.getHash(), receipt.get().getHash());
         System.out.println("Begin revoke ... ");
 
         nonce = this.jsonRpcProvider.getTransactionCount(userWallet.getAddress());
@@ -111,5 +114,26 @@ public class Test0100Kyc {
         this.middlewareWallet.sendTransaction(request);
 
         System.out.println("Done revoke ... ");
+    }
+
+    private Optional<TransactionReceipt> waitForTransaction(String hash, int attempt, int sleepDuration) throws InterruptedException {
+        Optional<TransactionReceipt> transactionReceipt = getTransactionReceipt(hash);
+            for(int i=0; i < attempt;i ++) {
+                if(!transactionReceipt.isPresent()){
+                    Thread.sleep(sleepDuration);
+                    transactionReceipt = getTransactionReceipt(hash);
+                }else {
+                    break;
+                }
+            }
+            return transactionReceipt;
+    }
+
+    private Optional<TransactionReceipt> getTransactionReceipt(String hash) {
+        try{
+            return Optional.of(this.jsonRpcProvider.getTransactionReceipt(hash, Object.class));
+        }catch (TransactionException ex) {
+            return Optional.empty();
+        }
     }
 }

@@ -55,6 +55,7 @@ public class JsonRpcProvider extends BaseProvider {
     protected <T> T perform(String method, Type responseType, Object ... params)  {
 
         String m = refactorMethodName(method);
+        @SuppressWarnings("unchecked")
         Request<?, ?> request = new Request(m,Arrays.asList(params), service, responseType.getClass());
 
         try {
@@ -66,6 +67,8 @@ public class JsonRpcProvider extends BaseProvider {
                 String message = !Strings.isEmpty(response.getError().getData()) ? response.getError().getData() : response.getError().getMessage();
                 handleErrorResponse(response.getError().getCode(),message);
             }
+
+            //noinspection unchecked
             return (T) response.getResult();
         } catch (IOException e) {
             e.printStackTrace();

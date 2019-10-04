@@ -204,12 +204,7 @@ public class Wallet implements Signer {
     }
 
     public static Wallet fromMnemonic(String mnemonic, Optional<int[]> path) {
-        if(!path.isPresent())
-            path = Optional.of(Constants.DefaultHDPath);
-        byte[] seed = MnemonicUtils.generateSeed(mnemonic, null);
-        Bip32ECKeyPair masterKeyPair = Bip32ECKeyPair.generateKeyPair(seed);
-        Bip32ECKeyPair bip44KeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, path.get());
-        return new Wallet(bip44KeyPair);
+        return new Wallet(SigningKey.fromMnemonic(mnemonic, path));
     }
 
     public static Wallet fromEncryptedJson(String json, String password) throws CipherException {
