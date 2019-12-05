@@ -10,7 +10,8 @@ import com.mxw.protocol.request.messages.builder.BankSendBuilder;
 import com.mxw.protocol.response.AccountState;
 import com.mxw.protocol.response.TransactionFee;
 import com.mxw.protocol.response.TransactionReceipt;
-import com.mxw.utils.Base64s;
+import com.mxw.utils.Convert;
+import com.mxw.utils.Numeric;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -77,7 +78,7 @@ public class JsonRpcProviderTest {
     @Test
     public void testKycAddress() {
         String kycAddress = jsonRpcProvider.getKycAddress(TestConfig.PRIVATE_KEY_ADDRESS);
-        Assert.assertEquals(kycAddress,TestConfig.PRIVATE_KEY_ADDRESS);
+        Assert.assertTrue(Numeric.isValidHex(kycAddress));
         String kycAddress2 = jsonRpcProvider.getKycAddress(TestConfig.VALID_ADDRESS_BUT_NULL);
         Assert.assertNull(kycAddress2);
     }
@@ -86,7 +87,7 @@ public class JsonRpcProviderTest {
     public void testGetFree() {
         String from = TestConfig.PRIVATE_KEY_ADDRESS;
         String to = TestConfig.TO_ADDRESS;
-        BigInteger amount = BigInteger.valueOf(1 * 18);
+        BigInteger amount = Convert.toCIN("1", Convert.Unit.MXW).toBigIntegerExact();;
         TransactionRequest request = jsonRpcProvider.getTransactionRequest("bank","bank-send", new BankSendBuilder(from,to, amount, null));
         TransactionFee fee = jsonRpcProvider.getTransactionFee(null, null, request);
         Assert.assertTrue(fee.getAmount().size() > 0 && fee.getAmount().get(0).getAmount()!=null);

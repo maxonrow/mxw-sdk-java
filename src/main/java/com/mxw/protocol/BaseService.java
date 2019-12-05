@@ -35,6 +35,7 @@ public abstract class BaseService implements Service {
     private static final String ERROR = "error";
     private static final String INNER_RESPONSE = "response";
     private static final String LOG = "log";
+    private static final String VALUE = "value";
     private final boolean includeRawResponses;
 
     public BaseService(boolean includeRawResponses) {
@@ -151,7 +152,7 @@ public abstract class BaseService implements Service {
         if(hasInnerResponse(resultJsonObject)) {
             JsonNode response = resultJsonObject.get(INNER_RESPONSE);
             InnerResponse innerResponse =  new InnerResponse(-1);
-            if(hasNode(response,LOG)) {
+            if(hasNode(response,LOG) && !Strings.isEmpty(response.get(LOG).asText())) {
                 JsonParser parser = objectMapper.treeAsTokens(response);
                 innerResponse = this.objectMapper.readValue(parser, InnerResponse.class);
             }else {

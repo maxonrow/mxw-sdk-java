@@ -250,11 +250,7 @@ public abstract class BaseProvider extends AbstractProvider {
 
     @Override
     public Boolean isWhiteListed(String addressOrName, BlockTag blockTag) {
-        String path = "/custom/kyc/is_whitelisted/" + addressOrName;
-        TypeReference<AbciResponse<Boolean>> typeReference = new TypeReference<AbciResponse<Boolean>>(){};
-        String tag = checkBlockTag(blockTag);
-        AbciResponse<Boolean> response = this.perform("isWhitelisted", typeReference.getType(), path,"", tag, null);
-        return response.getValue();
+        return this.perform("is_whitelisted", Boolean.class, addressOrName);
     }
 
     @Override
