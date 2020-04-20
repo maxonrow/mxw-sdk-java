@@ -11,6 +11,7 @@ import com.mxw.protocol.response.TransactionResponse;
 import com.mxw.providers.Provider;
 import com.mxw.tx.DefaultTransactionManager;
 import com.mxw.tx.TransactionManager;
+import com.mxw.utils.Numeric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +110,7 @@ public class Wallet implements Signer {
 
     @Override
     public String signMessage(byte[] message, boolean needToHash) {
-        return new String(Sign.joinSignature(Sign.signMessage(message, this.signingKey.getKeyPair(), needToHash)));
+        return Numeric.toHexString(Sign.joinSignature(Sign.signMessage(message, this.signingKey.getKeyPair(), needToHash)));
     }
 
     @Override

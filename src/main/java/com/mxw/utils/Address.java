@@ -13,7 +13,7 @@ public class Address {
         }
 
         String result = null;
-        if(address.startsWith(Constants.AddressPrefix)){
+        if(address.startsWith(Constants.AddressPrefix) || address.startsWith(Constants.kycAddressPrefix)){
             result = address;
         }
         else if(address.matches("^(0x)?[0-9a-fA-F]{40}$")) {

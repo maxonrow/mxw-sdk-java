@@ -1,5 +1,8 @@
 package com.mxw.protocol.response;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.mxw.protocol.deserializer.PublicKeyDeserializer;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +45,8 @@ public class AccountState {
 
         private List<Coin> coins = new ArrayList<Coin>();
 
-        private PublicKey publicKey;
+        @JsonDeserialize(using = PublicKeyDeserializer.class)
+        private String publicKey;
 
         private BigInteger accountNumber;
 
@@ -64,11 +68,11 @@ public class AccountState {
             this.coins = coins;
         }
 
-        public PublicKey getPublicKey() {
+        public String getPublicKey() {
             return publicKey;
         }
 
-        public void setPublicKey(PublicKey publicKey) {
+        public void setPublicKey(String publicKey) {
             this.publicKey = publicKey;
         }
 

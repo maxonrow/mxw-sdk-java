@@ -4,6 +4,7 @@ import static com.mxw.crypto.Bip32ECKeyPair.HARDENED_BIT;
 public interface Constants {
 
     String AddressPrefix = "mxw";
+    String kycAddressPrefix = "kyc";
 
     String AddressZero = "mxw000000000000000000000000000000000000000";
     String HashZero = "0x0000000000000000000000000000000000000000000000000000000000000000";

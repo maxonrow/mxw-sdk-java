@@ -12,6 +12,7 @@ import com.mxw.protocol.response.TransactionFee;
 import com.mxw.protocol.response.TransactionReceipt;
 import com.mxw.utils.Convert;
 import com.mxw.utils.Numeric;
+import com.mxw.utils.Strings;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -78,7 +79,7 @@ public class JsonRpcProviderTest {
     @Test
     public void testKycAddress() {
         String kycAddress = jsonRpcProvider.getKycAddress(TestConfig.PRIVATE_KEY_ADDRESS);
-        Assert.assertTrue(Numeric.isValidHex(kycAddress));
+        Assert.assertFalse(Strings.isEmpty(kycAddress));
         String kycAddress2 = jsonRpcProvider.getKycAddress(TestConfig.VALID_ADDRESS_BUT_NULL);
         Assert.assertNull(kycAddress2);
     }

@@ -4,6 +4,7 @@ import com.mxw.crypto.Bip32ECKeyPair;
 import com.mxw.crypto.MnemonicUtils;
 
 import com.mxw.crypto.Sign;
+import com.mxw.exceptions.CipherException;
 import com.mxw.exceptions.TransactionException;
 import com.mxw.networks.Network;
 
@@ -46,6 +47,13 @@ public class Test0200Wallet {
         this.toAddress = TestConfig.TO_ADDRESS;
         this.jsonRpcProvider = new JsonRpcProvider(this.httpService, new Network(TestConfig.HTTP_SERVICE_NETWORK, TestConfig.HTTP_SERVICE_NETWORK));
         this.wallet = new Wallet(privateKey, jsonRpcProvider);
+    }
+
+    @Test
+    public void testSignDataMessage() throws CipherException {
+        String message = "Hello World";
+        String hex =  this.wallet.signMessage(message.getBytes(), true);
+        Assert.assertEquals(hex, "0x034da2e201c6909b27704ff4702db71477e3dfc8c6008f9c74185e2c084066ba574e8c354274079952d9868869751e009baf8b142f5fc8bf51579df5aac23345");
     }
 
     @Test
@@ -133,7 +141,7 @@ public class Test0200Wallet {
         Wallet wallet = new Wallet(this.privateKey);
         wallet.connect(jsonRpcProvider);
 
-        System.out.printf("Balance = " + wallet.getBalance());
+        System.out.println("Balance = " + wallet.getBalance());
 
         assert(wallet.getBalance().compareTo(BigInteger.ZERO) >= 0);
     }

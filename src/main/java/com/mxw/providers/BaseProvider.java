@@ -162,9 +162,10 @@ public abstract class BaseProvider extends AbstractProvider {
         AccountState accountState = this.getAccountState(addressOrName, blockTag);
         if(accountState!=null && accountState.getValue()!=null && accountState.getValue().getCoins()!=null){
             List<Coin> coins = accountState.getValue().getCoins();
-            if(coins.size() > 0) {
-                if(coins.get(0).getAmount()!=null)
-                    return coins.get(0).getAmount();
+            for (Coin coin: coins) {
+                if(coin.getDenom().equalsIgnoreCase(Convert.Unit.CIN.toString())){
+                    return coin.getAmount();
+                }
             }
         }
         return BigInteger.ZERO;

@@ -123,6 +123,11 @@ public class Keys {
         return Address.getAddress(Bech32.encode(Constants.AddressPrefix, Bech32.toWords(bytes)));
     }
 
+    public static String computeKycAddress(String hash, String prefix) {
+        byte[] bytes = Numeric.hexStringToByteArray(hash);
+        return  Address.getAddress(Bech32.encode(prefix, Bech32.toWords(bytes)));
+    }
+
     public static String computeHexAddress(String address) {
         return Address.getAddress(Numeric.toHexString(Bech32.fromWords(Bech32.decode(address).data)));
     }
