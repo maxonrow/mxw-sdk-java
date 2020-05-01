@@ -159,7 +159,7 @@ public class Keys {
     }
 
     public static PublicKey keyFromPublic(String publicKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
-        KeyFactory factory = KeyFactory.getInstance("ECDSA", "BC");
+        KeyFactory factory = createBCKeyFactory();
         return keyFromPublic(factory, publicKey);
     }
 
@@ -171,7 +171,7 @@ public class Keys {
     }
 
     public static PrivateKey keyFromPrivate(String privateKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
-        KeyFactory factory = KeyFactory.getInstance("ECDSA", "BC");
+        KeyFactory factory = createBCKeyFactory();
         return keyFromPrivate(factory, privateKey);
     }
 
@@ -181,5 +181,8 @@ public class Keys {
         return factory.generatePrivate(ecPrivateKeySpec);
     }
 
+    public static KeyFactory createBCKeyFactory() throws NoSuchProviderException, NoSuchAlgorithmException {
+        return  KeyFactory.getInstance("ECDSA", "BC");
+    }
 
 }

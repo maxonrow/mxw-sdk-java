@@ -129,7 +129,7 @@ public class SigningKey {
     }
 
     public String computeSharedSecret(String publicKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException {
-        KeyFactory factory = KeyFactory.getInstance("ECDSA", "BC");
+        KeyFactory factory = Keys.createBCKeyFactory();
         PrivateKey prv_recovered = Keys.keyFromPrivate(factory, this.privateKey);
         PublicKey pub_recovered = Keys.keyFromPublic(factory, publicKey);
         KeyAgreement ka = KeyAgreement.getInstance("ECDH");
