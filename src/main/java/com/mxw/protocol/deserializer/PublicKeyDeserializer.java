@@ -15,12 +15,16 @@ public class PublicKeyDeserializer extends JsonDeserializer<Object> {
     public Object deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);
         if(node.isTextual()) {
-            return node.toString();
+            return node.textValue();
         }else if(node.isObject()){
             if(node.get("value")!=null) {
                 String value = node.get("value").textValue();
-                byte[] data = Base64.getDecoder().decode(value);
-                return Numeric.toHexString(data);
+                try {
+                    byte[] data = Base64.getDecoder().decode(value);
+                    return Numeric.toHexString(data);
+                }catch (Exception ex){
+                    return value;
+                }
             }
             return node.toString();
         }

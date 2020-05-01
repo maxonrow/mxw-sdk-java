@@ -4,12 +4,16 @@ import com.mxw.Constants;
 import com.mxw.utils.Address;
 import com.mxw.utils.Numeric;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.jce.spec.ECPrivateKeySpec;
+import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 
 import static com.mxw.crypto.SecureRandomUtils.secureRandom;
@@ -104,7 +108,7 @@ public class Keys {
             if(!compressed)
                 return Numeric.toHexString(bytes);
             //TODO: compress Public Key, currently return uncompress public key
-            return Numeric.toHexString(bytes);
+           return Numeric.toHexString(bytes);
         }
         throw new IllegalArgumentException("invalid public or private key");
     }
@@ -153,4 +157,29 @@ public class Keys {
         byte[] hash = payload.getBytes(StandardCharsets.UTF_8);
         return Numeric.toHexString(Hash.sha256(hash));
     }
+
+    public static PublicKey keyFromPublic(String publicKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory factory = KeyFactory.getInstance("ECDSA", "BC");
+        return keyFromPublic(factory, publicKey);
+    }
+
+    public static PublicKey keyFromPublic(KeyFactory factory, String publicKey) throws InvalidKeySpecException {
+        byte[] publicKeyBytes = Numeric.hexStringToByteArray(publicKey);
+        ECPoint point = Sign.decompressKey(Numeric.toBigInt(publicKeyBytes), true);
+        ECNamedCurveParameterSpec params = new ECNamedCurveParameterSpec("secp256k1", Sign.CURVE_SPEC.getCurve(), Sign.CURVE_SPEC.getG(), Sign.CURVE_SPEC.getN());
+        return factory.generatePublic(new ECPublicKeySpec(point, params));
+    }
+
+    public static PrivateKey keyFromPrivate(String privateKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory factory = KeyFactory.getInstance("ECDSA", "BC");
+        return keyFromPrivate(factory, privateKey);
+    }
+
+    public static PrivateKey keyFromPrivate(KeyFactory factory, String privateKey) throws InvalidKeySpecException {
+        byte[] privateKeyBytes =  Numeric.hexStringToByteArray(privateKey);
+        ECPrivateKeySpec ecPrivateKeySpec = new ECPrivateKeySpec(new BigInteger(1, privateKeyBytes), Sign.CURVE_SPEC);
+        return factory.generatePrivate(ecPrivateKeySpec);
+    }
+
+
 }

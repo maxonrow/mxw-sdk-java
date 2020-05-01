@@ -2,32 +2,26 @@ package com.mxw;
 
 import com.mxw.crypto.Bip32ECKeyPair;
 import com.mxw.crypto.MnemonicUtils;
-
-import com.mxw.crypto.Sign;
 import com.mxw.exceptions.CipherException;
-import com.mxw.exceptions.TransactionException;
 import com.mxw.networks.Network;
-
 import com.mxw.protocol.http.HttpService;
 import com.mxw.protocol.request.BlockTagName;
 import com.mxw.protocol.request.TransactionRequest;
 import com.mxw.protocol.request.messages.builder.BankSendBuilder;
 import com.mxw.protocol.response.TransactionFee;
-import com.mxw.protocol.response.TransactionResponse;
-
 import com.mxw.providers.JsonRpcProvider;
 import com.mxw.providers.Provider;
-
-import com.mxw.utils.Convert;
 import com.mxw.utils.Strings;
-
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 
 public class Test0200Wallet {
 
@@ -186,6 +180,15 @@ public class Test0200Wallet {
         String signedTransaction = wallet.sign(request);
 
         assert(signedTransaction != null);
+    }
+
+    @Test
+    public void testComputeSharedSecret() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, InvalidKeyException {
+        Wallet wallet1 = Wallet.createNewWallet();
+        Wallet wallet2 = Wallet.createNewWallet();
+        String sharedSecret1 = wallet1.computeSharedSecret(wallet2.getCompressedPublicKey());
+        String sharedSecret2 = wallet2.computeSharedSecret(wallet1.getCompressedPublicKey());
+        Assert.assertEquals(sharedSecret1, sharedSecret2);
     }
 
 

@@ -1,15 +1,14 @@
 package com.mxw.crypto;
 
 import com.mxw.Constants;
-import com.mxw.Wallet;
 import com.mxw.utils.Numeric;
 
+import javax.crypto.KeyAgreement;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
-   TODO: add verify computeSharedSecret
- **/
 public class SigningKey {
 
     private String privateKey;
@@ -127,6 +126,17 @@ public class SigningKey {
 
     public ECDSASignature signDegest(byte[] digest) {
         return this.keyPair.sign(digest);
+    }
+
+    public String computeSharedSecret(String publicKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException {
+        KeyFactory factory = KeyFactory.getInstance("ECDSA", "BC");
+        PrivateKey prv_recovered = Keys.keyFromPrivate(factory, this.privateKey);
+        PublicKey pub_recovered = Keys.keyFromPublic(factory, publicKey);
+        KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+        ka.init(prv_recovered);
+        ka.doPhase(pub_recovered, true);
+        byte[] sharedSecret = ka.generateSecret();
+        return Numeric.toHexString(sharedSecret);
     }
 
     public static SigningKey fromMnemonic(String mnemonic) {

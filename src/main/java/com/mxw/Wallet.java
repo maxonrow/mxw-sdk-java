@@ -17,8 +17,10 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Optional;
 
 import static com.mxw.utils.Assertions.verifyPrecondition;
@@ -212,6 +214,10 @@ public class Wallet implements Signer {
 
     public Signature getSignature(Object object) throws Exception{
         return this.transactionManager.sign(object);
+    }
+
+    public String computeSharedSecret(String otherPublicKey) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, InvalidKeyException {
+        return this.signingKey.computeSharedSecret(otherPublicKey);
     }
 }
 

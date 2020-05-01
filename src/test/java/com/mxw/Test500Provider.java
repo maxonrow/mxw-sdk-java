@@ -1,5 +1,7 @@
 package com.mxw;
 
+import com.mxw.crypto.Keys;
+import com.mxw.crypto.SigningKey;
 import com.mxw.networks.Network;
 import com.mxw.networks.Networks;
 
@@ -10,6 +12,7 @@ import com.mxw.protocol.response.*;
 
 import com.mxw.providers.JsonRpcProvider;
 
+import com.mxw.utils.Address;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,7 +79,7 @@ public class Test500Provider {
     }
 
     @Test
-    public void getTansactionReceipt(){
+    public void getTransactionReceipt(){
         TransactionReceipt transactionReceipt = jsonRpcProvider.getTransactionReceipt(TestConfig.HTTP_TEST_DECODE_HASH, TransactionRequest.class);
         assert(transactionReceipt != null);
     }
