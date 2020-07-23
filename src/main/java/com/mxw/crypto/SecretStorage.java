@@ -59,6 +59,7 @@ public class SecretStorage {
     private static final int CURRENT_VERSION = 3;
 
     private static final String CIPHER = "aes-128-ctr";
+    private static final String CIPHER_256 = "aes-256-ctr";
     static final String AES_128_CTR = "pbkdf2";
     static final String SCRYPT = "scrypt";
 
@@ -171,13 +172,17 @@ public class SecretStorage {
         }
     }
 
-    private static byte[] generateMac(byte[] derivedKey, byte[] cipherText) {
+    private static byte[] generateMac(byte[] derivedKey, byte[] cipherText, int srcPos) {
         byte[] result = new byte[16 + cipherText.length];
 
-        System.arraycopy(derivedKey, 16, result, 0, 16);
+        System.arraycopy(derivedKey, srcPos, result, 0, 16);
         System.arraycopy(cipherText, 0, result, 16, cipherText.length);
 
         return Hash.sha256(result);
+    }
+
+    private static byte[] generateMac(byte[] derivedKey, byte[] cipherText) {
+        return generateMac(derivedKey, cipherText, 16);
     }
 
     public static ECKeyPair decrypt(String password, WalletFile walletFile) throws CipherException {
@@ -185,7 +190,7 @@ public class SecretStorage {
         validate(walletFile);
 
         WalletFile.Crypto crypto = walletFile.getCrypto();
-
+        String cipher = crypto.getCipher();
         byte[] mac = Numeric.hexStringToByteArray(crypto.getMac());
         byte[] iv = Numeric.hexStringToByteArray(crypto.getCipherparams().getIv());
         byte[] cipherText = Numeric.hexStringToByteArray(crypto.getCiphertext());
@@ -213,15 +218,12 @@ public class SecretStorage {
         } else {
             throw new CipherException("Unable to deserialize params: " + crypto.getKdf());
         }
-        byte[] derivedMac = generateMac(derivedKey, cipherText);
-
+        byte[] derivedMac = getMac(cipher, derivedKey, cipherText);
         if (!Arrays.equals(derivedMac, mac)) {
             throw new CipherException("Invalid password provided");
         }
 
-        byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
-        byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
-        return ECKeyPair.create(privateKey);
+        return ECKeyPair.create(getPrivateKey(cipher, derivedKey, iv, cipherText));
     }
 
     static void validate(WalletFile walletFile) throws CipherException {
@@ -231,7 +233,7 @@ public class SecretStorage {
             throw new CipherException("Wallet version is not supported");
         }
 
-        if (!crypto.getCipher().equals(CIPHER)) {
+        if (!crypto.getCipher().equals(CIPHER) && !crypto.getCipher().equals(CIPHER_256)) {
             throw new CipherException("Wallet cipher is not supported");
         }
 
@@ -244,6 +246,25 @@ public class SecretStorage {
         byte[] bytes = new byte[size];
         secureRandom().nextBytes(bytes);
         return bytes;
+    }
+
+    private static byte[] getMac(String cipher, byte[] derivedKey, byte[] cipherText) {
+        if(cipher.equals(CIPHER_256)) {
+            return generateMac(derivedKey, cipherText, 32);
+        }else {
+          return generateMac(derivedKey, cipherText);
+        }
+    }
+
+    private static byte[] getPrivateKey(String cipher, byte[] derivedKey, byte[] iv, byte[] cipherText) throws CipherException {
+        byte[] encryptKey;
+        if(cipher.equals(CIPHER_256)) {
+            encryptKey = Arrays.copyOfRange(derivedKey, 0, 32);
+        }else {
+            encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
+        }
+
+        return performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
     }
 
 }
