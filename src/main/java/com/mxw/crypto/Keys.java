@@ -107,8 +107,9 @@ public class Keys {
         }else if(bytes.length == 65) {
             if(!compressed)
                 return Numeric.toHexString(bytes);
-            //TODO: compress Public Key, currently return uncompress public key
-           return Numeric.toHexString(bytes);
+            ECPoint point = Sign.CURVE.getCurve().decodePoint(bytes);
+            byte[] encoded = point.getEncoded(true);
+            return Numeric.toHexString(Arrays.copyOfRange(encoded, 0, encoded.length));
         }
         throw new IllegalArgumentException("invalid public or private key");
     }
@@ -164,8 +165,9 @@ public class Keys {
     }
 
     public static PublicKey keyFromPublic(KeyFactory factory, String publicKey) throws InvalidKeySpecException {
-        byte[] publicKeyBytes = Numeric.hexStringToByteArray(publicKey);
-        ECPoint point = Sign.decompressKey(Numeric.toBigInt(publicKeyBytes), true);
+        String computedPublicKey = Keys.computePublicKey(publicKey, false);
+        byte[] publicKeyBytes = Numeric.hexStringToByteArray(computedPublicKey);
+        ECPoint point =  Sign.CURVE.getCurve().decodePoint(publicKeyBytes);
         ECNamedCurveParameterSpec params = new ECNamedCurveParameterSpec("secp256k1", Sign.CURVE_SPEC.getCurve(), Sign.CURVE_SPEC.getG(), Sign.CURVE_SPEC.getN());
         return factory.generatePublic(new ECPublicKeySpec(point, params));
     }

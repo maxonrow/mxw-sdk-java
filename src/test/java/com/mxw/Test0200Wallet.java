@@ -188,7 +188,11 @@ public class Test0200Wallet {
         Wallet wallet2 = Wallet.createNewWallet();
         String sharedSecret1 = wallet1.computeSharedSecret(wallet2.getCompressedPublicKey());
         String sharedSecret2 = wallet2.computeSharedSecret(wallet1.getCompressedPublicKey());
+        String sharedSecret3 = wallet1.computeSharedSecret(wallet2.getPublicKey());
+        String sharedSecret4 = wallet2.computeSharedSecret(wallet1.getPublicKey());
         Assert.assertEquals(sharedSecret1, sharedSecret2);
+        Assert.assertEquals(sharedSecret3, sharedSecret4);
+        Assert.assertEquals(sharedSecret1, sharedSecret4);
     }
 
 

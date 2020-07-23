@@ -61,6 +61,16 @@ public class Test0100Kyc {
     }
 
     @Test
+    public void testGenerateKycAddress() throws Exception {
+        String seed =Address.getChecksum("0xb3ad4dE471f47D5226C667e201f2125ac3FA0258e3944dBfC86550FCD0776f5e");
+        KycAddress kycAddress = new KycAddress("MY", "NIC", "123456", 20200101, 19800101, seed.toLowerCase());
+        String payload = this.objectMapper.writeValueAsString(kycAddress);
+        String addressHex = Keys.getKeyAddressHex(payload);
+        String computedKycAddress = Keys.computeKycAddress(addressHex,Constants.kycAddressPrefix);
+        Assert.assertEquals(computedKycAddress,"kyc1v6kf4scf6pctpqxsqua5wwldn7lqh2cxc0vs924a3aywgf80z3ests6dc2");
+    }
+
+    @Test
     public void testKyc() throws Exception {
 
         System.out.println("Begin whitelist ... ");
@@ -74,10 +84,10 @@ public class Test0100Kyc {
 
         BigInteger nonce = this.jsonRpcProvider.getTransactionCount(userWallet.getAddress());
 
-        KycAddress kycAddress = new KycAddress(country, idType, id, idExpiry, dob, Address.getHash(seed));
+        KycAddress kycAddress = new KycAddress(country, idType, id, idExpiry, dob, Address.getHash(seed).toLowerCase());
         String kycAddressHash = Keys.getKeyAddressHex(this.objectMapper.writeValueAsString(kycAddress));
-
-        KycWhitelistModel kycWhitelistModel = new KycWhitelistModel(userWallet.getAddress(), kycAddressHash, nonce);
+        String computedKycAddress = Keys.computeKycAddress(kycAddressHash,Constants.kycAddressPrefix);
+        KycWhitelistModel kycWhitelistModel = new KycWhitelistModel(userWallet.getAddress(), computedKycAddress, nonce);
         PublicKey kycPubKey = new PublicKey("tendermint/" + userWallet.getPublicKeyType(), Base64s.base16to64(userWallet.getCompressedPublicKey()));
         KycWhitelistPayload kycWhitelistPayload = new KycWhitelistPayload(kycWhitelistModel, kycPubKey, userWallet.getSignature(kycWhitelistModel).getSignature());
 
