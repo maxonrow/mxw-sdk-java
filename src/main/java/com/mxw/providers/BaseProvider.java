@@ -14,6 +14,10 @@ import com.mxw.protocol.request.BlockTagName;
 import com.mxw.protocol.response.*;
 import com.mxw.protocol.request.messages.builder.TransactionValueBuilder;
 import com.mxw.protocol.request.TransactionRequest;
+import com.mxw.protocol.response.fungibleToken.FungibleTokenState;
+import com.mxw.protocol.response.fungibleToken.FungibleTokenStateResponse;
+import com.mxw.protocol.response.nonFungibleToken.NFTokenState;
+import com.mxw.protocol.response.nonFungibleToken.NFTokenStateResponse;
 import com.mxw.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +41,8 @@ public abstract class BaseProvider extends AbstractProvider {
     }
 
     public BaseProvider(Network network) {
-        Network knownNetwork = Network.getNetwork(network==null? Networks.HOMESTEAD.getNetwork() : network);
-        if(knownNetwork==null){
+        Network knownNetwork = Network.getNetwork(network == null ? Networks.HOMESTEAD.getNetwork() : network);
+        if (knownNetwork == null) {
             throw new IllegalArgumentException("Invalid network");
         }
         this.network = knownNetwork;
@@ -53,30 +57,44 @@ public abstract class BaseProvider extends AbstractProvider {
     public BigInteger getBlockNumber() {
         Status status = this.getStatus();
         BigInteger blockNumber = null;
-        if(status!=null && status.getSyncInfo()!=null && status.getSyncInfo().getLatestBlockHeight()!=null)
-            blockNumber =  status.getSyncInfo().getLatestBlockHeight();
+        if (status != null && status.getSyncInfo() != null && status.getSyncInfo().getLatestBlockHeight() != null)
+            blockNumber = status.getSyncInfo().getLatestBlockHeight();
 
-        if(blockNumber==null)
+        if (blockNumber == null)
             throw new InvalidResponseException("invalid response - getBlockNumber");
 
         return blockNumber;
     }
 
     @Override
-    public TransactionRequest getTransactionRequest(String route, String transactionType, TransactionValueBuilder builder) {
-        verifyPrecondition(builder!=null, "missing transaction field");
+    public TransactionRequest getTransactionRequest(String route, String transactionType,
+                                                    TransactionValueBuilder builder) {
+        verifyPrecondition(builder != null, "missing transaction field");
         TransactionRequest request = new TransactionRequest();
         String moduleName = route + "/" + transactionType;
-        switch (moduleName.toLowerCase()){
+        switch (moduleName.toLowerCase()) {
             case "bank/bank-send":
             case "kyc/kyc-whitelist":
             case "kyc/kyc-revokewhitelist":
             case "nameservice/nameservice-setaliasstatus":
             case "nameservice/nameservice-createalias":
+            case "token/token-createnonfungibletoken":
+            case "nonfungible/mintnonfungibleitem":
+            case "nonfungible/burnnonfungibleitem":
+            case "nonfungible/transfernonfungibleitem":
+            case "nonfungible/endorsement":
+            case "nonfungible/setnonfungibletokenstatus":
+            case "nonfungible/transfernonfungibletokenownership":
+            case "nonfungible/acceptnonfungibletokenownership":
+            case "token/token-createfungibletoken":
+            case "token/setfungibletokenstatus":
+            case "token/burnfungibletoken":
+            case "token/transferfungibletoken":
+            case "token/mintfungibletoken":
                 request.setType("cosmos-sdk/StdTx");
                 break;
             default:
-                throw new UnsupportedOperationException("operation not implemented: " +moduleName);
+                throw new UnsupportedOperationException("operation not implemented: " + moduleName);
         }
         request.setValue(builder.build());
         return request;
@@ -85,16 +103,17 @@ public abstract class BaseProvider extends AbstractProvider {
     @Override
     public TransactionFee getTransactionFee(String route, String transactionType, TransactionRequest request) {
         try {
-            TransactionFee response = this.perform("getTransactionFee", TransactionFee.class, Base64s.encode(objectMapper.writeValueAsString(request).getBytes(StandardCharsets.UTF_8)));
+            TransactionFee response = this.perform("getTransactionFee", TransactionFee.class,
+                    Base64s.encode(objectMapper.writeValueAsString(request).getBytes(StandardCharsets.UTF_8)));
             return response;
-        }catch (JsonProcessingException ex) {
+        } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException("failed to serialize TransactionRequest ");
         }
     }
 
     @Override
     public TransactionFeeSetting getTransactionFeeSetting(String transactionType) {
-       throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -129,8 +148,8 @@ public abstract class BaseProvider extends AbstractProvider {
 
     @Override
     public AccountState getAccountState(String addressOrName, BlockTag blockTag) {
-       String address = this.resolveName(addressOrName, blockTag);
-       String block = checkBlockTag(blockTag);
+        String address = this.resolveName(addressOrName, blockTag);
+        String block = checkBlockTag(blockTag);
         return this.perform("getAccountState", AccountState.class, address);
 
     }
@@ -142,11 +161,12 @@ public abstract class BaseProvider extends AbstractProvider {
 
     @Override
     public BigInteger getAccountNumber(String addressOrName, BlockTag blockTag) {
-        if(blockTag==null) {
+        if (blockTag == null) {
             blockTag = BlockTagName.LATEST;
         }
         AccountState accountState = this.getAccountState(addressOrName, blockTag);
-        if(accountState!=null && accountState.getValue()!=null && accountState.getValue().getAccountNumber()!=null)
+        if (accountState != null && accountState.getValue() != null
+                && accountState.getValue().getAccountNumber() != null)
             return accountState.getValue().getAccountNumber();
 
         return BigInteger.ZERO;
@@ -160,10 +180,10 @@ public abstract class BaseProvider extends AbstractProvider {
     @Override
     public BigInteger getBalance(String addressOrName, BlockTag blockTag) {
         AccountState accountState = this.getAccountState(addressOrName, blockTag);
-        if(accountState!=null && accountState.getValue()!=null && accountState.getValue().getCoins()!=null){
+        if (accountState != null && accountState.getValue() != null && accountState.getValue().getCoins() != null) {
             List<Coin> coins = accountState.getValue().getCoins();
-            for (Coin coin: coins) {
-                if(coin.getDenom().equalsIgnoreCase(Convert.Unit.CIN.toString())){
+            for (Coin coin : coins) {
+                if (coin.getDenom().equalsIgnoreCase(Convert.Unit.CIN.toString())) {
                     return coin.getAmount();
                 }
             }
@@ -179,18 +199,18 @@ public abstract class BaseProvider extends AbstractProvider {
     @Override
     public BigInteger getTransactionCount(String addressOrName, BlockTag blockTag) {
         AccountState accountState = this.getAccountState(addressOrName, blockTag);
-        if(accountState!=null && accountState.getValue()!=null && accountState.getValue().getSequence()!=null)
+        if (accountState != null && accountState.getValue() != null && accountState.getValue().getSequence() != null)
             return accountState.getValue().getSequence();
 
         return BigInteger.ZERO;
     }
 
     @Override
-    public TransactionResponse sendTransaction(String signedTransaction, boolean async){
+    public TransactionResponse sendTransaction(String signedTransaction, boolean async) {
         String method = async ? "sendTransactionAsync" : "sendTransaction";
         InnerResponse response = this.perform(method, InnerResponse.class, signedTransaction);
-        if(response.getCode()== 0 && !Strings.isEmpty(response.getHash())) {
-           return new TransactionResponse(Numeric.prependHexPrefix(response.getHash()).toLowerCase());
+        if (response.getCode() == 0 && !Strings.isEmpty(response.getHash())) {
+            return new TransactionResponse(Numeric.prependHexPrefix(response.getHash()).toLowerCase());
         }
         handleErrorResponse(response.getCode(), response.getLog());
         return null;
@@ -208,22 +228,22 @@ public abstract class BaseProvider extends AbstractProvider {
 
     @Override
     public Block getBlock(BlockTag blockHashOrBlockTag) {
-        try{
+        try {
             String blockHash = blockHashOrBlockTag.getValue();
-            if(Numeric.isValidHex(blockHash) && Bytes.getHashLength(blockHash) == 32){
+            if (Numeric.isValidHex(blockHash) && Bytes.getHashLength(blockHash) == 32) {
                 this.perform("getBlock", Block.class, blockHash);
             }
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
         }
 
         BigInteger blockNumber = BigInteger.valueOf(-128);
         String blockTag = checkBlockTag(blockHashOrBlockTag);
-        if(Numeric.isValidHex(blockTag)){
+        if (Numeric.isValidHex(blockTag)) {
             blockNumber = Numeric.decodeQuantity(blockTag);
         }
 
-        if(blockNumber.compareTo(BigInteger.ZERO) == 0) {
+        if (blockNumber.compareTo(BigInteger.ZERO) == 0) {
             BigInteger latestBlock = this.getBlockNumber();
             return this.getBlock(new BlockTagNumber(latestBlock));
         }
@@ -240,7 +260,8 @@ public abstract class BaseProvider extends AbstractProvider {
     public <T> TransactionReceipt<T> getTransactionReceipt(String transactionHash, Class<T> receiptType) {
         transactionHash = Numeric.prependHexPrefix(transactionHash);
         String base64 = Base64s.encode(Numeric.hexStringToByteArray(transactionHash));
-        JavaType type = this.objectMapper.getTypeFactory().constructParametricType(TransactionReceipt.class, receiptType);
+        JavaType type = this.objectMapper.getTypeFactory().constructParametricType(TransactionReceipt.class,
+                receiptType);
         return this.perform("getTransactionReceipt", type, base64, null);
     }
 
@@ -262,9 +283,10 @@ public abstract class BaseProvider extends AbstractProvider {
     @Override
     public String getKycAddress(String addressOrName, BlockTag blockTag) {
         String path = "/custom/kyc/get_kyc_address/" + addressOrName;
-        TypeReference<AbciResponse<String>> typeReference = new TypeReference<AbciResponse<String>>(){};
+        TypeReference<AbciResponse<String>> typeReference = new TypeReference<AbciResponse<String>>() {
+        };
         String tag = checkBlockTag(blockTag);
-        AbciResponse<String> response = this.perform("getKycAddress", typeReference.getType(), path,"", tag, null);
+        AbciResponse<String> response = this.perform("getKycAddress", typeReference.getType(), path, "", tag, null);
         return response.getValue();
     }
 
@@ -275,9 +297,9 @@ public abstract class BaseProvider extends AbstractProvider {
 
     @Override
     public String resolveName(String name, BlockTag blockTag) {
-        try{
+        try {
             return Address.getAddress(name);
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
         }
         throw new UnsupportedOperationException();
@@ -290,10 +312,11 @@ public abstract class BaseProvider extends AbstractProvider {
 
     @Override
     public String lookupAddress(String address, BlockTag blockTag) {
-       String path = "/custom/nameservice/whois/" + address;
-        TypeReference<AbciResponse<String>> typeReference = new TypeReference<AbciResponse<String>>(){};
+        String path = "/custom/nameservice/whois/" + address;
+        TypeReference<AbciResponse<String>> typeReference = new TypeReference<AbciResponse<String>>() {
+        };
         String tag = checkBlockTag(blockTag);
-        AbciResponse<String> response = this.perform("lookupAddress", typeReference.getType(), path,"", tag, null);
+        AbciResponse<String> response = this.perform("lookupAddress", typeReference.getType(), path, "", tag, null);
         return response.getValue();
     }
 
@@ -312,26 +335,59 @@ public abstract class BaseProvider extends AbstractProvider {
         throw new UnsupportedOperationException();
     }
 
-    protected abstract  <T> T perform(String method, Class<?> responseType, Object ... params);
-    protected abstract  <T> T perform(String method, Type responseType, Object ... params);
+    protected abstract <T> T perform(String method, Class<?> responseType, Object... params);
 
-    protected void handleErrorResponse(int code, String message){
-        throw  new JsonRpcClientException(code, message);
+    protected abstract <T> T perform(String method, Type responseType, Object... params);
+
+    protected void handleErrorResponse(int code, String message) {
+        throw new JsonRpcClientException(code, message);
     }
 
     private String checkBlockTag(BlockTag blockTag) {
-        if(blockTag == null || blockTag.getValue().equals("earliest") || blockTag.getValue().equals("latest") || blockTag.getValue().equals("pending"))
+        if (blockTag == null || blockTag.getValue().equals("earliest") || blockTag.getValue().equals("latest")
+                || blockTag.getValue().equals("pending"))
             return "0";
 
-        if(Numeric.isValidHex(blockTag.getValue())){
+        if (Numeric.isValidHex(blockTag.getValue())) {
             return Numeric.toBigInt(blockTag.getValue()).toString();
         }
 
-        try{
+        try {
             return new BigInteger(blockTag.getValue()).toString();
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
         }
         throw new IllegalArgumentException("Invalid blockTag");
+    }
+
+    @Override
+    public NFTokenState getNFTokenState(String symbol, BlockTag blockTag) {
+        String path = "/custom/nonFungible/token_data/" + symbol;
+
+        String tag = checkBlockTag(blockTag);
+        NFTokenStateResponse response = this.perform("getNFTokenState", NFTokenStateResponse.class, path, "", tag, null);
+
+        try {
+            return objectMapper.readValue(Base64s.decode(response.value), NFTokenState.class);
+        } catch (JsonProcessingException ex) {
+            ex.printStackTrace();
+            throw new IllegalArgumentException("failed to serialize nft state response ");
+        }
+    }
+
+
+    @Override
+    public FungibleTokenState getFungibleTokenState(String symbol, BlockTag blockTag) {
+        String path = "/custom/token/token_data/" + symbol;
+
+        String tag = checkBlockTag(blockTag);
+        FungibleTokenStateResponse response = this.perform("getTokenState", FungibleTokenStateResponse.class, path, "", tag, null);
+
+        try {
+            return objectMapper.readValue(Base64s.decode(response.value), FungibleTokenState.class);
+        } catch (JsonProcessingException ex) {
+            ex.printStackTrace();
+            throw new IllegalArgumentException("failed to serialize token state response ");
+        }
     }
 }

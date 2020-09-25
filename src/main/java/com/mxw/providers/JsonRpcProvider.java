@@ -1,5 +1,6 @@
 package com.mxw.providers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mxw.exceptions.AddressFormatException;
 import com.mxw.exceptions.JsonRpcClientException;
 import com.mxw.exceptions.TransactionException;
@@ -38,7 +39,7 @@ public class JsonRpcProvider extends BaseProvider {
     }
 
     public JsonRpcProvider(Service service) {
-       this(service, null);
+        this(service, null);
     }
 
     public JsonRpcProvider(Service service, Network network) {
@@ -47,25 +48,26 @@ public class JsonRpcProvider extends BaseProvider {
     }
 
     @Override
-    protected <T> T perform(String method, Class<?> responseType, Object ... params) {
+    protected <T> T perform(String method, Class<?> responseType, Object... params) {
         return this.perform(method, (Type) responseType, params);
     }
 
     @Override
-    protected <T> T perform(String method, Type responseType, Object ... params)  {
+    protected <T> T perform(String method, Type responseType, Object... params) {
 
         String m = refactorMethodName(method);
         @SuppressWarnings("unchecked")
-        Request<?, ?> request = new Request(m,Arrays.asList(params), service, responseType.getClass());
+        Request<?, ?> request = new Request(m, Arrays.asList(params), service, responseType.getClass());
 
         try {
+//            System.out.println("xxx:: " + new ObjectMapper().writeValueAsString(Arrays.asList(params)));
             Response response = this.service.send(request, responseType);
-            if(log.isDebugEnabled() && response.isHasResult()){
+            if (log.isDebugEnabled() && response.isHasResult()) {
                 log.debug(response.getRawResponse());
             }
-            if(response.hasError()){
+            if (response.hasError()) {
                 String message = !Strings.isEmpty(response.getError().getData()) ? response.getError().getData() : response.getError().getMessage();
-                handleErrorResponse(response.getError().getCode(),message);
+                handleErrorResponse(response.getError().getCode(), message);
             }
 
             //noinspection unchecked
@@ -78,23 +80,23 @@ public class JsonRpcProvider extends BaseProvider {
 
     @Override
     protected void handleErrorResponse(int code, String message) {
-        if(message.contains("decoding bech32 failed")) {
-            throw  new AddressFormatException("invalid address");
-        }else if(message.startsWith("Tx (") && message.contains(") not found")) {
+        if (message.contains("decoding bech32 failed")) {
+            throw new AddressFormatException("invalid address");
+        } else if (message.startsWith("Tx (") && message.contains(") not found")) {
             throw new TransactionException("transaction not found");
-        }else if(message.contains("\"codespace\":\"mxw\",\"code\":1000,") || code == 1000){
+        } else if (message.contains("\"codespace\":\"mxw\",\"code\":1000,") || code == 1000) {
             throw new TransactionException("kyc registration is required");
-        }else if(message.contains("\"codespace\":\"mxw\",\"code\":1001,") || code == 1001){
+        } else if (message.contains("\"codespace\":\"mxw\",\"code\":1001,") || code == 1001) {
             throw new TransactionException("duplicated kyc");
-        }else if(message.contains("\"codespace\":\"sdk\",\"code\":5,") || message.contains("\"codespace\":\"sdk\",\"code\":10,") || code == 5 || code == 10){
+        } else if (message.contains("\"codespace\":\"sdk\",\"code\":5,") || message.contains("\"codespace\":\"sdk\",\"code\":10,") || code == 5 || code == 10) {
             throw new TransactionException("insufficient funds");
-        }else if(message.contains("\"codespace\":\"sdk\",\"code\":14,") || code == 14){
+        } else if (message.contains("\"codespace\":\"sdk\",\"code\":14,") || code == 14) {
             throw new TransactionException("insufficient fees");
-        }else if(message.contains("\"codespace\":\"sdk\",\"code\":11,") || code == 11){
+        } else if (message.contains("\"codespace\":\"sdk\",\"code\":11,") || code == 11) {
             throw new TransactionException("invalid amount");
-        }else if(message.contains("signature verification failed") || code == 4) {
+        } else if (message.contains("signature verification failed") || code == 4) {
             throw new TransactionException("signature verification failed");
-        }else if(message.contains("Height must be less than or equal to the current blockchain height")){
+        } else if (message.contains("Height must be less than or equal to the current blockchain height")) {
             throw new TransactionException("block not found");
         }
 
@@ -102,12 +104,14 @@ public class JsonRpcProvider extends BaseProvider {
     }
 
     protected String refactorMethodName(String origin) {
-        switch (origin){
+        switch (origin) {
             case "getTransactionFeeSetting":
             case "getTokenList":
             case "isWhitelisted":
             case "getKycAddress":
             case "lookupAddress":
+            case "getNFTokenState":
+            case "getTokenState":
                 return "abci_query";
             case "getAccountState":
                 return "account";
