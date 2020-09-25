@@ -7,8 +7,8 @@ import com.mxw.protocol.response.PublicKey;
 @JsonPropertyOrder({"kyc", "pub_key","signature"})
 public class KycWhitelistPayload {
 
-    private KycWhitelistModel kycWhitelistModel;
-    private PublicKey pubKey;
+    private KycWhitelistModel kyc;
+    private PublicKey publicKey;
     private String signature;
 
     public KycWhitelistPayload(KycWhitelistModel kycWhitelistModel, PublicKey pubKey, String signature){
@@ -19,20 +19,20 @@ public class KycWhitelistPayload {
 
     @JsonProperty("kyc")
     public KycWhitelistModel getKycWhitelistModel() {
-        return kycWhitelistModel;
+        return kyc;
     }
 
-    public void setKycWhitelistModel(KycWhitelistModel kycWhitelistModel) {
-        this.kycWhitelistModel = kycWhitelistModel;
+    public void setKycWhitelistModel(KycWhitelistModel kyc) {
+        this.kyc = kyc;
     }
 
     @JsonProperty("pub_key")
     public PublicKey getPubKey() {
-        return pubKey;
+        return publicKey;
     }
 
-    public void setPubKey(PublicKey pubKey) {
-        this.pubKey = pubKey;
+    public void setPubKey(PublicKey publicKey) {
+        this.publicKey = publicKey;
     }
 
     public String getSignature() {
