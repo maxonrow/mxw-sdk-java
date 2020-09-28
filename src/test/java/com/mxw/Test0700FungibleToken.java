@@ -8,6 +8,7 @@ import com.mxw.nonFungibleToken.NonFungibleToken;
 import com.mxw.nonFungibleToken.NonFungibleTokenEnum;
 import com.mxw.protocol.common.Bundle;
 import com.mxw.protocol.http.HttpService;
+import com.mxw.protocol.request.TransactionRequest;
 import com.mxw.protocol.response.TransactionReceipt;
 import com.mxw.protocol.response.TransactionResponse;
 import com.mxw.protocol.response.fungibleToken.*;
@@ -54,8 +55,7 @@ public class Test0700FungibleToken {
         this.middleware = Wallet.fromMnemonic("hospital item sad baby mass turn ability exhibit obtain include trip please");
         this.middleware.connect(jsonRpcProvider);
 
-//        this.symbol = "FT" + Integer.toHexString(Math.abs(new Random().nextInt()));
-        this.symbol = "FT4c4cf739";
+        this.symbol = "FT" + Integer.toHexString(Math.abs(new Random().nextInt()));
     }
 
     @Test
@@ -63,14 +63,14 @@ public class Test0700FungibleToken {
 //        createFungibleToken();
 //        refreshFungibleToken();
 //        approveStatusFungibleToken();
-//        burnFungibleToken();
 //        mintFungibleToken();
+//        burnFungibleToken();
 //        updateStatusFungibleToken(FungibleTokenEnum.FungibleTokenStatusActions.UNFREEZE);
 //        transferFungibleToken();
     }
 
     public void createFungibleToken() throws Exception {
-        TransactionResponse response = FungibleToken.create(
+        TransactionRequest request = FungibleToken.create(
                 new FungibleTokenCreate(
                         feeCollector,
                         "1",
@@ -82,6 +82,7 @@ public class Test0700FungibleToken {
                         "100000000000000000000000000"
                 ), this.wallet, null);
 
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for create transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -113,9 +114,10 @@ public class Test0700FungibleToken {
         FungibleTokenStatusTransaction transaction = FungibleToken.signFungibleTokenStatusTransaction(
                 payload, this.issuer, null);
 
-        TransactionResponse response = FungibleToken.fromSymbol(this.symbol, this.middleware, null)
+        TransactionRequest request = FungibleToken.fromSymbol(this.symbol, this.middleware, null)
                 .sendFungibleTokenStatusTransaction(transaction, null);
 
+        TransactionResponse response = this.middleware.sendTransaction(request);
         System.out.println("Wait for status 'approve' update transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -125,11 +127,12 @@ public class Test0700FungibleToken {
     }
 
     public void burnFungibleToken() throws Exception {
-        TransactionResponse response = FungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = FungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .burn(new FungibleTokenBurn(
                                 this.symbol,
                                 this.wallet.getBalance().toString()),
                         null);
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for burn transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, 5000);
         Assert.assertTrue(receipt.isPresent());
@@ -146,9 +149,10 @@ public class Test0700FungibleToken {
         FungibleTokenStatusTransaction transaction = FungibleToken.signFungibleTokenStatusTransaction(
                 payload, this.issuer, null);
 
-        TransactionResponse response = FungibleToken.fromSymbol(this.symbol, this.middleware, null)
+        TransactionRequest request = FungibleToken.fromSymbol(this.symbol, this.middleware, null)
                 .sendFungibleTokenStatusTransaction(transaction, null);
 
+        TransactionResponse response = this.middleware.sendTransaction(request);
         System.out.println("Wait for status '" + status.toString() + "' update transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -158,12 +162,13 @@ public class Test0700FungibleToken {
     }
 
     public void transferFungibleToken() throws Exception {
-        TransactionResponse response = FungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = FungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .transfer(new FungibleTokenTransfer(
                                 this.symbol,
                                 this.wallet.getBalance().toString()),
                         this.wallet.getAddress(),
                         null);
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for transfer transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -173,13 +178,13 @@ public class Test0700FungibleToken {
     }
 
     public void mintFungibleToken() throws Exception {
-        TransactionResponse response = FungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = FungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .mint(new FungibleTokenMint(
                                 this.symbol,
                                 "10000000000000000000000000"),
                         this.wallet.getAddress(),
                         null);
-
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for mint transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
