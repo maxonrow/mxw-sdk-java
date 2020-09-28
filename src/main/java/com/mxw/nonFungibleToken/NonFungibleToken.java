@@ -118,12 +118,12 @@ public class NonFungibleToken {
      * @param overrides     extra param
      * @throws Exception if the configuration is invalid.
      */
-    public TransactionResponse transferOwnership(String addressOrName, Bundle overrides) throws Exception {
+    public TransactionRequest transferOwnership(String addressOrName, Bundle overrides) throws Exception {
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getTransferOwnershipTransactionRequest(addressOrName, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getTransferOwnershipTransactionRequest(String addressOrName, Bundle overrides)
@@ -151,12 +151,12 @@ public class NonFungibleToken {
      * @param overrides extra param
      * @throws Exception if the configuration is invalid.
      */
-    public TransactionResponse acceptOwnership(Bundle overrides) throws Exception {
+    public TransactionRequest acceptOwnership(Bundle overrides) throws Exception {
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getAcceptOwnershipTransactionRequest(overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getAcceptOwnershipTransactionRequest(Bundle overrides) throws Exception {
@@ -238,7 +238,7 @@ public class NonFungibleToken {
      * @param overrides extra param
      * @throws Exception if the configuration is invalid.
      */
-    public TransactionResponse mint(NFTokenMint item, String toAddressOrName, Bundle overrides)
+    public TransactionRequest mint(NFTokenMint item, String toAddressOrName, Bundle overrides)
             throws Exception {
         if (item == null)
             throw new Exception("mint item missing");
@@ -246,7 +246,7 @@ public class NonFungibleToken {
         TransactionRequest request = getMintTransactionRequest(item, toAddressOrName, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getMintTransactionRequest(NFTokenMint item, String toAddressOrName, Bundle overrides)
@@ -277,14 +277,14 @@ public class NonFungibleToken {
      * @param overrides extra param
      * @throws Exception if the configuration is invalid.
      */
-    public TransactionResponse burn(NFTokenBurn item, Bundle overrides) throws Exception {
+    public TransactionRequest burn(NFTokenBurn item, Bundle overrides) throws Exception {
         if (item == null)
             throw new Exception("burn item missing");
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getBurnTransactionRequest(item, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getBurnTransactionRequest(NFTokenBurn item, Bundle overrides) throws Exception {
@@ -309,14 +309,14 @@ public class NonFungibleToken {
      * @param overrides       extra param
      * @throws Exception if the configuration is invalid.
      */
-    public TransactionResponse transfer(NFTokenTransferItem item, String toAddressOrName, Bundle overrides) throws Exception {
+    public TransactionRequest transfer(NFTokenTransferItem item, String toAddressOrName, Bundle overrides) throws Exception {
         if (item == null)
             throw new Exception("transfer item missing");
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getTransferItemTransactionRequest(item, toAddressOrName, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getTransferItemTransactionRequest(NFTokenTransferItem item, String toAddressOrName, Bundle overrides) throws Exception {
@@ -344,14 +344,14 @@ public class NonFungibleToken {
      * @param overrides extra param
      * @throws Exception if the configuration is invalid.
      */
-    public TransactionResponse endorse(NFTokenEndorse item, Bundle overrides) throws Exception {
+    public TransactionRequest endorse(NFTokenEndorse item, Bundle overrides) throws Exception {
         if (item == null)
             throw new Exception("endorse item missing");
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getEndorseTransactionRequest(item, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getEndorseTransactionRequest(NFTokenEndorse item, Bundle overrides)
@@ -495,13 +495,13 @@ public class NonFungibleToken {
      * @param overrides   extra param
      * @throws Exception if the configuration is invalid.
      */
-    public TransactionResponse sendNonFungibleTokenStatusTransaction(NFTokenStatusTransaction transaction, Bundle overrides) throws Exception {
+    public TransactionRequest sendNonFungibleTokenStatusTransaction(NFTokenStatusTransaction transaction, Bundle overrides) throws Exception {
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getNonFungibleTokenStatusTransactionRequest(transaction, signer, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
 
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getNonFungibleTokenStatusTransactionRequest(NFTokenStatusTransaction transaction, Signer signer, Bundle overrides) throws Exception {

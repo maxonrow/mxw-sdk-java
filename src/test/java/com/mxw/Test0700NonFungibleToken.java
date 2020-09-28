@@ -5,6 +5,7 @@ import com.mxw.networks.Network;
 import com.mxw.protocol.common.Bundle;
 import com.mxw.nonFungibleToken.NonFungibleToken;
 import com.mxw.nonFungibleToken.NonFungibleTokenEnum;
+import com.mxw.protocol.request.TransactionRequest;
 import com.mxw.protocol.response.nonFungibleToken.NFTokenStatusFee;
 import com.mxw.protocol.http.HttpService;
 import com.mxw.protocol.response.TransactionReceipt;
@@ -54,9 +55,7 @@ public class Test0700NonFungibleToken {
         this.middleware.connect(jsonRpcProvider);
 
         this.symbol = "NFT" + Integer.toHexString(Math.abs(new Random().nextInt()));
-//        this.symbol = "NFT2855316";
         this.itemID = "Item-" + Integer.toHexString(Math.abs(new Random().nextInt()));
-//        this.itemID = "Item-6eec0f51";
     }
 
     @Test
@@ -98,7 +97,7 @@ public class Test0700NonFungibleToken {
     }
 
     public void mintNonFungibleTokenItem() throws Exception {
-        TransactionResponse response = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .mint(new NFTokenMint(
                                 this.symbol,
                                 this.itemID,
@@ -106,7 +105,7 @@ public class Test0700NonFungibleToken {
                                 "item metadata"),
                         this.wallet.getAddress(),
                         null);
-
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for mint transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -116,11 +115,12 @@ public class Test0700NonFungibleToken {
     }
 
     public void burnNonFungibleTokenItem() throws Exception {
-        TransactionResponse response = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .burn(new NFTokenBurn(
                                 this.symbol,
                                 this.itemID),
                         null);
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for burn transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, 5000);
         Assert.assertTrue(receipt.isPresent());
@@ -130,12 +130,13 @@ public class Test0700NonFungibleToken {
     }
 
     public void transferNonFungibleTokenItem() throws Exception {
-        TransactionResponse response = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .transfer(new NFTokenTransferItem(
                                 this.symbol,
                                 this.itemID),
                         this.wallet.getAddress(),
                         null);
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for transfer transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -149,12 +150,13 @@ public class Test0700NonFungibleToken {
         for (int i = 0; i < 85; i++)
             metadata += "跳";
 
-        TransactionResponse response = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .endorse(new NFTokenEndorse(
                                 this.symbol,
                                 this.itemID,
                                 metadata),
                         null);
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for endorse transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -195,9 +197,10 @@ public class Test0700NonFungibleToken {
         NFTokenStatusTransaction transaction = NonFungibleToken.signNonFungibleTokenStatusTransaction(
                 payload, this.issuer, null);
 
-        TransactionResponse response = NonFungibleToken.fromSymbol(this.symbol, this.middleware, null)
+        TransactionRequest request = NonFungibleToken.fromSymbol(this.symbol, this.middleware, null)
                 .sendNonFungibleTokenStatusTransaction(transaction, null);
 
+        TransactionResponse response = this.middleware.sendTransaction(request);
         System.out.println("Wait for status 'approve' update transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -214,9 +217,10 @@ public class Test0700NonFungibleToken {
         NFTokenStatusTransaction transaction = NonFungibleToken.signNonFungibleTokenStatusTransaction(
                 payload, this.issuer, null);
 
-        TransactionResponse response = NonFungibleToken.fromSymbol(this.symbol, this.middleware, null)
+        TransactionRequest request = NonFungibleToken.fromSymbol(this.symbol, this.middleware, null)
                 .sendNonFungibleTokenStatusTransaction(transaction, null);
 
+        TransactionResponse response = this.middleware.sendTransaction(request);
         System.out.println("Wait for status '" + status.toString() + "' update transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, INTERVAL);
         Assert.assertTrue(receipt.isPresent());
@@ -227,9 +231,10 @@ public class Test0700NonFungibleToken {
 
 
     public void transferOwnershipNonFungibleToken() throws Exception {
-        TransactionResponse response = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .transferOwnership(wallet.getAddress(),
                         null);
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for transfer ownership transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, 5000);
         Assert.assertTrue(receipt.isPresent());
@@ -239,8 +244,9 @@ public class Test0700NonFungibleToken {
     }
 
     public void acceptOwnershipNonFungibleToken() throws Exception {
-        TransactionResponse response = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
+        TransactionRequest request = NonFungibleToken.fromSymbol(this.symbol, this.wallet, null)
                 .acceptOwnership(null);
+        TransactionResponse response = this.wallet.sendTransaction(request);
         System.out.println("Wait for accept ownership transaction ... " + response.getHash());
         Optional<TransactionReceipt> receipt = waitForTransaction(response.getHash(), ATTEMPT, 5000);
         Assert.assertTrue(receipt.isPresent());

@@ -112,15 +112,15 @@ public class FungibleToken {
         return token;
     }
 
-    public static TransactionResponse create(FungibleTokenCreate item, Signer signer, Bundle overrides)
+    public static TransactionRequest create(FungibleTokenCreate item, Signer signer, Bundle overrides)
             throws Exception {
         if (overrides == null) overrides = new Bundle();
 
         TransactionRequest request = getCreateTransactionRequest(item, signer, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
+        return request;
 
-        return signer.sendTransaction(request);
     }
 
     private static TransactionRequest getCreateTransactionRequest(FungibleTokenCreate item, Signer signer, Bundle overrides)
@@ -144,14 +144,14 @@ public class FungibleToken {
         return request;
     }
 
-    public TransactionResponse burn(FungibleTokenBurn item, Bundle overrides) throws Exception {
+    public TransactionRequest burn(FungibleTokenBurn item, Bundle overrides) throws Exception {
         if (item == null)
             throw new Exception("burn item missing");
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getBurnTransactionRequest(item, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getBurnTransactionRequest(FungibleTokenBurn item, Bundle overrides) throws Exception {
@@ -168,14 +168,14 @@ public class FungibleToken {
         return request;
     }
 
-    public TransactionResponse transfer(FungibleTokenTransfer item, String toAddressOrName, Bundle overrides) throws Exception {
+    public TransactionRequest transfer(FungibleTokenTransfer item, String toAddressOrName, Bundle overrides) throws Exception {
         if (item == null)
             throw new Exception("transfer item missing");
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getTransferTransactionRequest(item, toAddressOrName, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getTransferTransactionRequest(FungibleTokenTransfer item, String toAddressOrName, Bundle overrides) throws Exception {
@@ -196,7 +196,7 @@ public class FungibleToken {
         return request;
     }
 
-    public TransactionResponse mint(FungibleTokenMint item, String toAddressOrName, Bundle overrides)
+    public TransactionRequest mint(FungibleTokenMint item, String toAddressOrName, Bundle overrides)
             throws Exception {
         if (item == null)
             throw new Exception("mint item missing");
@@ -204,7 +204,7 @@ public class FungibleToken {
         TransactionRequest request = getMintTransactionRequest(item, toAddressOrName, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getMintTransactionRequest(FungibleTokenMint item, String toAddressOrName, Bundle overrides)
@@ -288,13 +288,13 @@ public class FungibleToken {
         return transaction;
     }
 
-    public TransactionResponse sendFungibleTokenStatusTransaction(FungibleTokenStatusTransaction transaction, Bundle overrides) throws Exception {
+    public TransactionRequest sendFungibleTokenStatusTransaction(FungibleTokenStatusTransaction transaction, Bundle overrides) throws Exception {
         if (overrides == null) overrides = new Bundle();
         TransactionRequest request = getFungibleTokenStatusTransactionRequest(transaction, signer, overrides);
         request.setChainId(signer.getProvider().getNetwork().getChainId());
         signer.sign(request);
 
-        return signer.sendTransaction(request);
+        return request;
     }
 
     private TransactionRequest getFungibleTokenStatusTransactionRequest(FungibleTokenStatusTransaction transaction, Signer signer, Bundle overrides) throws Exception {
