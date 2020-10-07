@@ -1,5 +1,6 @@
 package com.mxw.crypto;
 
+import com.mxw.Constants;
 import com.mxw.exceptions.CipherException;
 import com.mxw.utils.Numeric;
 import org.bouncycastle.crypto.digests.SHA256Digest;
@@ -16,7 +17,11 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -50,11 +55,12 @@ public class SecretStorage {
     private static final int N_LIGHT = 1 << 12;
     private static final int P_LIGHT = 6;
 
-    private static final int N_STANDARD = 1 << 18;
+    private static final int N_STANDARD = 1 << 17;
     private static final int P_STANDARD = 1;
 
     private static final int R = 8;
     private static final int DKLEN = 32;
+    private static final int DKLEN_256 = 48;
 
     private static final int CURRENT_VERSION = 3;
 
@@ -66,23 +72,34 @@ public class SecretStorage {
     public static WalletFile create(String password, ECKeyPair ecKeyPair, int n, int p)
             throws CipherException {
 
+        return create(password, ecKeyPair, n, p, null, Constants.DefaultHDPath);
+    }
+
+    public static WalletFile create(String password, ECKeyPair ecKeyPair, int n, int p, String mnemonic, int[] hdPath)
+            throws CipherException {
+        String cipher = CIPHER_256;
+        int dklen = getDKlen(cipher);
         byte[] salt = generateRandomBytes(32);
-
-        byte[] derivedKey =
-                generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, R, p, DKLEN);
-
-        byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
+        // generate derivedKey with 80 length instead of DKLEN for mxw metadata encryption
+        byte[] derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, R, p, 80);
+        byte[] encryptKey = getEncryptKey(cipher, derivedKey);
         byte[] iv = generateRandomBytes(16);
-
         byte[] privateKeyBytes =
                 Numeric.toBytesPadded(Numeric.toBigInt(ecKeyPair.getPrivateKey()), Keys.PRIVATE_KEY_SIZE);
 
         byte[] cipherText =
                 performCipherOperation(Cipher.ENCRYPT_MODE, iv, encryptKey, privateKeyBytes);
 
-        byte[] mac = generateMac(derivedKey, cipherText);
+        byte[] mac = getMac(cipher, derivedKey, cipherText);
 
-        return createWalletFile(ecKeyPair, cipherText, iv, salt, mac, n, p);
+        MnemonicOption mnemonicOption = null;
+        if(mnemonic!=null && !mnemonic.equals("")){
+            byte[] mnemonicKey = getMnemonicKey(cipher, derivedKey);
+            byte[] entropy = MnemonicUtils.generateEntropy(mnemonic);
+            mnemonicOption = new MnemonicOption(mnemonic, entropy, mnemonicKey, hdPath);
+        }
+
+        return createWalletFile(ecKeyPair, cipherText, iv, salt, mac, n, p, mnemonicOption);
     }
 
     public static WalletFile createStandard(String password, ECKeyPair ecKeyPair)
@@ -95,6 +112,17 @@ public class SecretStorage {
         return create(password, ecKeyPair, N_LIGHT, P_LIGHT);
     }
 
+    public static WalletFile createEncryptedWallet(String password, ECKeyPair ecKeyPair, String mnemonic, int[] hdPath) throws CipherException {
+        if(mnemonic==null || mnemonic.equals("")){
+            return createStandard(password, ecKeyPair);
+        }
+        return create(password, ecKeyPair, N_STANDARD, P_STANDARD, mnemonic, hdPath);
+    }
+
+    public static WalletFile createEncryptedWallet(String password, SigningKey signingKey) throws CipherException {
+       return createEncryptedWallet(password, signingKey.getKeyPair(), signingKey.getMnemonic(), signingKey.getPath());
+    }
+
     private static WalletFile createWalletFile(
             ECKeyPair ecKeyPair,
             byte[] cipherText,
@@ -102,13 +130,24 @@ public class SecretStorage {
             byte[] salt,
             byte[] mac,
             int n,
-            int p) {
+            int p) throws CipherException {
+        return createWalletFile(ecKeyPair, cipherText, iv, salt, mac, n, p, null);
+    }
+
+    private static WalletFile createWalletFile(
+            ECKeyPair ecKeyPair,
+            byte[] cipherText,
+            byte[] iv,
+            byte[] salt,
+            byte[] mac,
+            int n,
+            int p, MnemonicOption mnemonicOption) throws CipherException {
 
         WalletFile walletFile = new WalletFile();
         walletFile.setAddress(Keys.computeAddress(ecKeyPair));
 
         WalletFile.Crypto crypto = new WalletFile.Crypto();
-        crypto.setCipher(CIPHER);
+        crypto.setCipher(CIPHER_256);
         crypto.setCiphertext(Numeric.toHexStringNoPrefix(cipherText));
 
         WalletFile.CipherParams cipherParams = new WalletFile.CipherParams();
@@ -117,7 +156,7 @@ public class SecretStorage {
 
         crypto.setKdf(SCRYPT);
         WalletFile.ScryptKdfParams kdfParams = new WalletFile.ScryptKdfParams();
-        kdfParams.setDklen(DKLEN);
+        kdfParams.setDklen(getDKlen(crypto.getCipher()));
         kdfParams.setN(n);
         kdfParams.setP(p);
         kdfParams.setR(R);
@@ -128,6 +167,10 @@ public class SecretStorage {
         walletFile.setCrypto(crypto);
         walletFile.setId(UUID.randomUUID().toString());
         walletFile.setVersion(CURRENT_VERSION);
+
+        if(mnemonicOption!=null) {
+            walletFile.setMxw(generateMxwProperties(walletFile, mnemonicOption));
+        }
 
         return walletFile;
     }
@@ -206,7 +249,7 @@ public class SecretStorage {
             int p = scryptKdfParams.getP();
             int r = scryptKdfParams.getR();
             byte[] salt = Numeric.hexStringToByteArray(scryptKdfParams.getSalt());
-            derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, r, p, dklen);
+            derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, r, p, 80);
         } else if (kdfParams instanceof WalletFile.Aes128CtrKdfParams) {
             WalletFile.Aes128CtrKdfParams aes128CtrKdfParams =
                     (WalletFile.Aes128CtrKdfParams) crypto.getKdfparams();
@@ -224,6 +267,65 @@ public class SecretStorage {
         }
 
         return ECKeyPair.create(getPrivateKey(cipher, derivedKey, iv, cipherText));
+    }
+
+    public static SigningKey decryptToSignKey(String password, WalletFile walletFile) throws CipherException {
+        validate(walletFile);
+
+        WalletFile.Crypto crypto = walletFile.getCrypto();
+        String cipher = crypto.getCipher();
+        byte[] mac = Numeric.hexStringToByteArray(crypto.getMac());
+        byte[] iv = Numeric.hexStringToByteArray(crypto.getCipherparams().getIv());
+        byte[] cipherText = Numeric.hexStringToByteArray(crypto.getCiphertext());
+
+        byte[] derivedKey;
+
+        WalletFile.KdfParams kdfParams = crypto.getKdfparams();
+        if (kdfParams instanceof WalletFile.ScryptKdfParams) {
+            WalletFile.ScryptKdfParams scryptKdfParams =
+                    (WalletFile.ScryptKdfParams) crypto.getKdfparams();
+            int dklen = scryptKdfParams.getDklen();
+            int n = scryptKdfParams.getN();
+            int p = scryptKdfParams.getP();
+            int r = scryptKdfParams.getR();
+            byte[] salt = Numeric.hexStringToByteArray(scryptKdfParams.getSalt());
+            // generate derivedKey with 80 length instead of DKLEN for mxw metadata decryption
+            derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, r, p, 80);
+        } else if (kdfParams instanceof WalletFile.Aes128CtrKdfParams) {
+            WalletFile.Aes128CtrKdfParams aes128CtrKdfParams =
+                    (WalletFile.Aes128CtrKdfParams) crypto.getKdfparams();
+            int c = aes128CtrKdfParams.getC();
+            String prf = aes128CtrKdfParams.getPrf();
+            byte[] salt = Numeric.hexStringToByteArray(aes128CtrKdfParams.getSalt());
+
+            derivedKey = generateAes128CtrDerivedKey(password.getBytes(UTF_8), salt, c, prf);
+        } else {
+            throw new CipherException("Unable to deserialize params: " + crypto.getKdf());
+        }
+        byte[] derivedMac = getMac(cipher, derivedKey, cipherText);
+        if (!Arrays.equals(derivedMac, mac)) {
+            throw new CipherException("Invalid password provided");
+        }
+        String privateKey = Numeric.toHexString(getPrivateKey(cipher, derivedKey, iv, cipherText));
+        SigningKey signingKey;
+        if(walletFile.getMxw()!=null) {
+            WalletFile.MxwMetaData mxwMetaData = walletFile.getMxw();
+            byte[] mnemonicCipherText = Numeric.hexStringToByteArray(mxwMetaData.getMnemonicCiphertext());
+            byte[] mnemonicCounter =  Numeric.hexStringToByteArray(mxwMetaData.getMnemonicCounter());
+            String path = mxwMetaData.getPath();
+            byte[] mnemonicKey = getMnemonicKey(cipher, derivedKey);
+            byte[] entropy = performCipherOperation(Cipher.DECRYPT_MODE, mnemonicCounter, mnemonicKey, mnemonicCipherText);
+            MnemonicUtils.validateEntropy(entropy);
+            String mnemonic = MnemonicUtils.generateMnemonic(entropy);
+            Optional<int[]> hdPath = Optional.ofNullable(HDPathUtils.fromStringPath(path));
+            signingKey = SigningKey.fromMnemonic(mnemonic, hdPath);
+            if(!privateKey.equalsIgnoreCase(signingKey.getPrivateKey())){
+                throw new CipherException("mnemonic mismatch ");
+            }
+        }else {
+            signingKey = new SigningKey(privateKey);
+        }
+        return signingKey;
     }
 
     static void validate(WalletFile walletFile) throws CipherException {
@@ -256,15 +358,106 @@ public class SecretStorage {
         }
     }
 
-    private static byte[] getPrivateKey(String cipher, byte[] derivedKey, byte[] iv, byte[] cipherText) throws CipherException {
+    private static byte[] getEncryptKey(String cipher, byte[] derivedKey) {
         byte[] encryptKey;
         if(cipher.equals(CIPHER_256)) {
             encryptKey = Arrays.copyOfRange(derivedKey, 0, 32);
         }else {
             encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
         }
+        return encryptKey;
+    }
 
+    private static byte[] getPrivateKey(String cipher, byte[] derivedKey, byte[] iv, byte[] cipherText) throws CipherException {
+        byte[] encryptKey = getEncryptKey(cipher, derivedKey);
         return performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
+    }
+
+    private static int getDKlen(String cipher) {
+        if(cipher.equals(CIPHER_256)) {
+            return DKLEN_256;
+        }
+        return DKLEN;
+    }
+
+    private static byte[] getMnemonicKey(String cipher, byte[] derivedKey) {
+        byte[] mnemonicKey;
+        if(cipher.equals(CIPHER_256)) {
+            mnemonicKey = Arrays.copyOfRange(derivedKey, 48, 80);
+        }else {
+            mnemonicKey = Arrays.copyOfRange(derivedKey, 32, 64);
+        }
+        return mnemonicKey;
+    }
+
+    private static WalletFile.MxwMetaData generateMxwProperties(WalletFile walletFile, MnemonicOption mnemonicOption) throws CipherException {
+        byte[] mnemonicIv = generateRandomBytes(16);
+        byte[] mnemonicCiphertext = performCipherOperation(Cipher.ENCRYPT_MODE, mnemonicIv, mnemonicOption.getMnemonicKey(), mnemonicOption.entropy);
+        WalletFile.MxwMetaData metaData = new WalletFile.MxwMetaData(getWalletFileName(walletFile),Numeric.toHexStringNoPrefix(mnemonicIv), Numeric.toHexStringNoPrefix(mnemonicCiphertext));
+        metaData.setPath(HDPathUtils.toStringPath(mnemonicOption.hdPath));
+        return metaData;
+    }
+
+    private static String getWalletFileName(WalletFile walletFile) {
+        DateTimeFormatter format =
+                DateTimeFormatter.ofPattern("'UTC--'yyyy-MM-dd'T'HH-mm-ss.nVV'--'");
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+
+        return now.format(format) + walletFile.getAddress();
+    }
+
+    private static class MnemonicOption {
+
+        public MnemonicOption() {
+
+        }
+
+        public MnemonicOption(String mnemonic, byte[] entropy, byte[] mnemonicKey, int[] hdPath){
+            this.mnemonic = mnemonic;
+            this.entropy = entropy;
+            this.mnemonicKey = mnemonicKey;
+            this.hdPath = hdPath;
+        }
+
+        private String mnemonic;
+
+        private byte[] entropy;
+
+        private byte[] mnemonicKey;
+
+        private int[] hdPath;
+
+        public String getMnemonic() {
+            return mnemonic;
+        }
+
+        public void setMnemonic(String mnemonic) {
+            this.mnemonic = mnemonic;
+        }
+
+        public byte[] getEntropy() {
+            return entropy;
+        }
+
+        public void setEntropy(byte[] entropy) {
+            this.entropy = entropy;
+        }
+
+        public byte[] getMnemonicKey() {
+            return mnemonicKey;
+        }
+
+        public void setMnemonicKey(byte[] mnemonicKey) {
+            this.mnemonicKey = mnemonicKey;
+        }
+
+        public int[] getHdPath() {
+            return hdPath;
+        }
+
+        public void setHdPath(int[] hdPath) {
+            this.hdPath = hdPath;
+        }
     }
 
 }

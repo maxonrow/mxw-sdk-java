@@ -1,7 +1,10 @@
 package com.mxw;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mxw.crypto.*;
 import com.mxw.exceptions.CipherException;
+import com.mxw.protocol.ObjectMapperFactory;
 import com.mxw.protocol.request.BlockTag;
 import com.mxw.protocol.request.TransactionRequest;
 import com.mxw.protocol.request.messages.builder.BankSendBuilder;
@@ -39,6 +42,8 @@ public class Wallet implements Signer {
 
     private TransactionManager transactionManager;
 
+    private ObjectMapper objectMapper;
+
     public Wallet(ECKeyPair keyPair) {
         this(keyPair.getPrivateKey());
     }
@@ -75,6 +80,7 @@ public class Wallet implements Signer {
         this.signingKey = privateKey;
         this.provider = provider;
         this.transactionManager = transactionManager;
+        this.objectMapper = ObjectMapperFactory.getObjectMapper();
     }
 
     @Override
@@ -189,6 +195,23 @@ public class Wallet implements Signer {
         return this.provider.getKycAddress(this.getAddress(), blockTag);
     }
 
+    public SigningKey getSigningKey() {
+        return signingKey;
+    }
+
+    public void setSigningKey(SigningKey signingKey) {
+        this.signingKey = signingKey;
+    }
+
+    public WalletFile EncryptWallet(String password) throws CipherException {
+        return SecretStorage.createEncryptedWallet(password, this.signingKey);
+    }
+
+    public String EncryptWalletJson(String password) throws CipherException, JsonProcessingException {
+        WalletFile walletFile = EncryptWallet(password);
+        return objectMapper.writeValueAsString(walletFile);
+    }
+
     public static Wallet createNewWallet() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
         ECKeyPair keyPair = createRandomKeyPair();
         return new Wallet(keyPair.getPrivateKey());
@@ -204,8 +227,8 @@ public class Wallet implements Signer {
 
     public static Wallet fromEncryptedJson(String json, String password) throws CipherException {
         WalletFile walletFile = SecretStorageUtils.getWalletFileFromJson(json);
-        ECKeyPair keyPair = SecretStorage.decrypt(password, walletFile);
-        return new Wallet(keyPair);
+        SigningKey signingKey = SecretStorage.decryptToSignKey(password, walletFile);
+        return new Wallet(signingKey);
     }
 
     private static ECKeyPair createRandomKeyPair() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {

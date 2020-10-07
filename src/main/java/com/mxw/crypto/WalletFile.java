@@ -1,8 +1,6 @@
 package com.mxw.crypto;
 
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -11,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /** Ethereum wallet file.
  * implement from <a href="https://github.com/web3j/web3j/blob/master/core/src/main/java/org/web3j/crypto/WalletFile.java">web3j</a>
@@ -20,6 +19,8 @@ public class WalletFile {
     private Crypto crypto;
     private String id;
     private int version;
+
+    private MxwMetaData mxw;
 
     public WalletFile() {}
 
@@ -59,6 +60,15 @@ public class WalletFile {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    @JsonSetter("x-mxw")
+    @JsonProperty("x-mxw")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public MxwMetaData getMxw() {return mxw;}
+
+    public void setMxw(MxwMetaData mxwMetaData){
+        this.mxw = mxwMetaData;
     }
 
     @Override
@@ -440,6 +450,105 @@ public class WalletFile {
             }
 
             return kdfParams;
+        }
+    }
+
+
+    public static class MxwMetaData {
+
+        public MxwMetaData(){
+
+        }
+
+        public MxwMetaData(String filename, String mnemonicCounter, String mnemonicCiphertext){
+            this.filename = filename;
+            this.mnemonicCounter = mnemonicCounter;
+            this.mnemonicCiphertext = mnemonicCiphertext;
+        }
+
+        public MxwMetaData(String filename, String mnemonicCounter, String mnemonicCiphertext, String path){
+            this.filename = filename;
+            this.mnemonicCounter = mnemonicCounter;
+            this.mnemonicCiphertext = mnemonicCiphertext;
+            this.path = path;
+        }
+
+        private String client = "mxw-sdk";
+
+        private  String filename;
+
+        private String mnemonicCounter;
+
+        private String mnemonicCiphertext;
+
+        private String path = "m/44'/376'/0'/0/0";
+
+        private String version = "0.1";
+
+        public String getClient() {
+            return client;
+        }
+
+        public void setClient(String client) {
+            this.client = client;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+        public void setFilename(String filename) {
+            this.filename = filename;
+        }
+
+        public String getMnemonicCounter() {
+            return mnemonicCounter;
+        }
+
+        public void setMnemonicCounter(String mnemonicCounter) {
+            this.mnemonicCounter = mnemonicCounter;
+        }
+
+        public String getMnemonicCiphertext() {
+            return mnemonicCiphertext;
+        }
+
+        public void setMnemonicCiphertext(String mnemonicCiphertext) {
+            this.mnemonicCiphertext = mnemonicCiphertext;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public void setVersion(String version) {
+            this.version = version;
+        }
+
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MxwMetaData mxwMetaData = (MxwMetaData) o;
+            return client.equals(mxwMetaData.client) &&
+                    mnemonicCounter.equals(mxwMetaData.mnemonicCounter) &&
+                    mnemonicCiphertext.equals(mxwMetaData.mnemonicCiphertext) &&
+                    path.equals(mxwMetaData.path) &&
+                    version.equals(mxwMetaData.version);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(client, mnemonicCounter, mnemonicCiphertext, path, version);
         }
     }
 }

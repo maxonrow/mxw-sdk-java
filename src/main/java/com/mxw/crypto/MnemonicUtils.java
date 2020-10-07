@@ -155,7 +155,7 @@ public class MnemonicUtils {
         return Arrays.copyOfRange(bits, from, to);
     }
 
-    private static void validateEntropy(byte[] entropy) {
+    public static void validateEntropy(byte[] entropy) {
         if (entropy == null) {
             throw new IllegalArgumentException("Entropy is required");
         }

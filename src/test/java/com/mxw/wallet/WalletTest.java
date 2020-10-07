@@ -1,17 +1,25 @@
 package com.mxw.wallet;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mxw.Constants;
 import com.mxw.TestConfig;
 import com.mxw.Wallet;
-import com.mxw.crypto.SecretStorageUtils;
-import com.mxw.crypto.WalletFile;
+import com.mxw.crypto.*;
 import com.mxw.exceptions.CipherException;
+import com.mxw.utils.Numeric;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigInteger;
 import java.util.Optional;
+
+import static com.mxw.crypto.Bip32ECKeyPair.HARDENED_BIT;
+
 
 public class WalletTest {
 
+    ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     public void testWalletFromMnemonic() {
@@ -32,9 +40,41 @@ public class WalletTest {
 
     @Test
     public void testDecryptJson() throws CipherException {
-
         Wallet wallet = Wallet.fromEncryptedJson(TestConfig.JSON_WALLET_STRING,TestConfig.ENCRYPT_PASSWORD);
         Assert.assertEquals(wallet.getAddress(),TestConfig.JSON_WALLET_ADDRESS);
+    }
+
+    @Test
+    public void testEncryptWithoutMnemonic() throws CipherException, JsonProcessingException {
+        Wallet wallet = new Wallet(TestConfig.PRIVATE_KEY_STRING);
+        WalletFile walletFile = wallet.EncryptWallet(TestConfig.ENCRYPT_PASSWORD);
+        String json = wallet.EncryptWalletJson(TestConfig.ENCRYPT_PASSWORD);
+        SigningKey signingKey = SecretStorage.decryptToSignKey(TestConfig.ENCRYPT_PASSWORD, walletFile);
+        Assert.assertEquals(wallet.getSigningKey(), signingKey);
+        Assert.assertEquals(wallet.getPrivateKey(), signingKey.getPrivateKey());
+    }
+
+    @Test
+    public void testEncryptWithMnemonic() throws CipherException, JsonProcessingException {
+        String mnemonic = TestConfig.MNEMONIC;
+        SigningKey signingKey = SigningKey.fromMnemonic(mnemonic);
+        WalletFile walletFile = SecretStorage.createEncryptedWallet(TestConfig.ENCRYPT_PASSWORD, signingKey);
+        Wallet wallet = Wallet.fromEncryptedJson(objectMapper.writeValueAsString(walletFile), TestConfig.ENCRYPT_PASSWORD);
+        Assert.assertNotNull(walletFile.getMxw());
+        Assert.assertEquals(walletFile.getAddress(), signingKey.getAddress());
+        Assert.assertEquals(wallet.getSigningKey().getPrivateKey(), signingKey.getPrivateKey());
+        Assert.assertEquals(wallet.getSigningKey().getMnemonic(), mnemonic);
+
+    }
+
+    @Test
+    public void testDecryptJsonWithMxwMetadata() throws CipherException {
+        WalletFile walletFile = SecretStorageUtils.getWalletFileFromJson(TestConfig.JSON_WALLET_STRING_WITH_MXW);
+        SigningKey signingKey = SecretStorage.decryptToSignKey(TestConfig.ENCRYPT_PASSWORD, walletFile);
+        Assert.assertEquals(walletFile.getAddress(), signingKey.getAddress());
+        Wallet wallet = Wallet.fromEncryptedJson(TestConfig.JSON_WALLET_STRING_WITH_MXW, TestConfig.ENCRYPT_PASSWORD);
+        Assert.assertEquals(signingKey.getPrivateKey(), wallet.getPrivateKey());
+        Assert.assertEquals(signingKey.getMnemonic(),TestConfig.MNEMONIC);
     }
 
     @Test
