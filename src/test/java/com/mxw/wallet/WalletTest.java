@@ -47,8 +47,8 @@ public class WalletTest {
     @Test
     public void testEncryptWithoutMnemonic() throws CipherException, JsonProcessingException {
         Wallet wallet = new Wallet(TestConfig.PRIVATE_KEY_STRING);
-        WalletFile walletFile = wallet.EncryptWallet(TestConfig.ENCRYPT_PASSWORD);
-        String json = wallet.EncryptWalletJson(TestConfig.ENCRYPT_PASSWORD);
+        WalletFile walletFile = wallet.encryptWallet(TestConfig.ENCRYPT_PASSWORD);
+        String json = wallet.encryptWalletJson(TestConfig.ENCRYPT_PASSWORD);
         SigningKey signingKey = SecretStorage.decryptToSignKey(TestConfig.ENCRYPT_PASSWORD, walletFile);
         Assert.assertEquals(wallet.getSigningKey(), signingKey);
         Assert.assertEquals(wallet.getPrivateKey(), signingKey.getPrivateKey());
