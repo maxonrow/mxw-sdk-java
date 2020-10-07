@@ -1,5 +1,6 @@
 package com.mxw;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mxw.crypto.Keys;
 import com.mxw.crypto.SecretStorage;
@@ -68,6 +69,29 @@ public class Test0100Kyc {
         String addressHex = Keys.getKeyAddressHex(payload);
         String computedKycAddress = Keys.computeKycAddress(addressHex,Constants.kycAddressPrefix);
         Assert.assertEquals(computedKycAddress,"kyc1v6kf4scf6pctpqxsqua5wwldn7lqh2cxc0vs924a3aywgf80z3ests6dc2");
+    }
+
+    @Test
+    public void printKycToSign() throws Exception {
+        System.out.println("Begin whitelist ... ");
+
+        String country = "MY";
+        String idType = "NIC";
+        String id = userWallet.getAddress();
+        int idExpiry = 20200101;
+        int dob = 19800101;
+        byte[] seed = SecretStorage.generateRandomBytes(32);
+
+        BigInteger nonce = this.jsonRpcProvider.getTransactionCount(userWallet.getAddress());
+
+        KycAddress kycAddress = new KycAddress(country, idType, id, idExpiry, dob, Address.getHash(seed).toLowerCase());
+        String kycAddressHash = Keys.getKeyAddressHex(this.objectMapper.writeValueAsString(kycAddress));
+        String computedKycAddress = Keys.computeKycAddress(kycAddressHash,Constants.kycAddressPrefix);
+        KycWhitelistModel kycWhitelistModel = new KycWhitelistModel(userWallet.getAddress(), computedKycAddress, nonce);
+        System.out.println(objectMapper.writeValueAsString(kycWhitelistModel));
+        PublicKey kycPubKey = new PublicKey("tendermint/" + userWallet.getPublicKeyType(), Base64s.base16to64(userWallet.getCompressedPublicKey()));
+        KycWhitelistPayload kycWhitelistPayload = new KycWhitelistPayload(kycWhitelistModel, kycPubKey, userWallet.getSignature(kycWhitelistModel).getSignature());
+        System.out.println(objectMapper.writeValueAsString(kycWhitelistPayload));
     }
 
     @Test

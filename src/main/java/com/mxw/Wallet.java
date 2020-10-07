@@ -80,7 +80,7 @@ public class Wallet implements Signer {
         this.signingKey = privateKey;
         this.provider = provider;
         this.transactionManager = transactionManager;
-        this.objectMapper = ObjectMapperFactory.getObjectMapper();
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -203,12 +203,12 @@ public class Wallet implements Signer {
         this.signingKey = signingKey;
     }
 
-    public WalletFile EncryptWallet(String password) throws CipherException {
+    public WalletFile encryptWallet(String password) throws CipherException {
         return SecretStorage.createEncryptedWallet(password, this.signingKey);
     }
 
-    public String EncryptWalletJson(String password) throws CipherException, JsonProcessingException {
-        WalletFile walletFile = EncryptWallet(password);
+    public String encryptWalletJson(String password) throws CipherException, JsonProcessingException {
+        WalletFile walletFile = encryptWallet(password);
         return objectMapper.writeValueAsString(walletFile);
     }
 
