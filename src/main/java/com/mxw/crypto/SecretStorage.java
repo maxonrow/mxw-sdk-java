@@ -119,10 +119,20 @@ public class SecretStorage {
         return create(password, ecKeyPair, N_STANDARD, P_STANDARD, mnemonic, hdPath);
     }
 
+    public static WalletFile createEncryptedWallet(String password, int n, int p, ECKeyPair ecKeyPair, String mnemonic, int[] hdPath) throws CipherException {
+        if(mnemonic==null || mnemonic.equals("")){
+            return createStandard(password, ecKeyPair);
+        }
+        return create(password, ecKeyPair, 1 << n, p, mnemonic, hdPath);
+    }
+
     public static WalletFile createEncryptedWallet(String password, SigningKey signingKey) throws CipherException {
        return createEncryptedWallet(password, signingKey.getKeyPair(), signingKey.getMnemonic(), signingKey.getPath());
     }
 
+    public static WalletFile createEncryptedWallet(String password, int n, int p, SigningKey signingKey) throws CipherException {
+        return createEncryptedWallet(password, n, p, signingKey.getKeyPair(), signingKey.getMnemonic(), signingKey.getPath());
+    }
     private static WalletFile createWalletFile(
             ECKeyPair ecKeyPair,
             byte[] cipherText,

@@ -207,8 +207,17 @@ public class Wallet implements Signer {
         return SecretStorage.createEncryptedWallet(password, this.signingKey);
     }
 
+    public WalletFile encryptWallet(String password, int n, int p) throws CipherException {
+        return SecretStorage.createEncryptedWallet(password, n, p, this.signingKey);
+    }
+
     public String encryptWalletJson(String password) throws CipherException, JsonProcessingException {
         WalletFile walletFile = encryptWallet(password);
+        return objectMapper.writeValueAsString(walletFile);
+    }
+
+    public String encryptWalletJson(String password, int n, int p) throws CipherException, JsonProcessingException {
+        WalletFile walletFile = encryptWallet(password, n, p);
         return objectMapper.writeValueAsString(walletFile);
     }
 
