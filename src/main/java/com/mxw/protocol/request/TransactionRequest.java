@@ -1,5 +1,6 @@
 package com.mxw.protocol.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mxw.protocol.response.TransactionValue;
 
 import java.math.BigInteger;
@@ -8,12 +9,13 @@ public class TransactionRequest {
 
     private String type;
 
+    @JsonIgnore
     private BigInteger nonce;
-
+    @JsonIgnore
     private BigInteger accountNumber;
-
+    @JsonIgnore
     private String chainId;
-
+    @JsonIgnore
     private BigInteger sequence;
 
     private TransactionValue value;

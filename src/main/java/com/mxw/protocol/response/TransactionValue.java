@@ -5,13 +5,13 @@ import java.util.List;
 
 public class TransactionValue  {
 
-    private List<Signature> signatures;
-
     private TransactionFee fee;
 
     private String memo;
 
     private List<TransactionMessage> msg;
+
+    private List<Signature> signatures;
 
     public TransactionValue() {
         this.msg = new ArrayList<>();
